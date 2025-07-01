@@ -32,25 +32,42 @@ export const GameCompletion: React.FC<GameCompletionProps> = ({
     const isWinner = (!isTie && ((isPlayer1 && p1Wins > p2Wins) || (isPlayer2 && p2Wins > p1Wins)));
 
     return (
-        <div className="p-4 border border-gray-600 rounded-lg">
-            <div className="p-3 bg-blue-900 text-blue-200 rounded-md text-sm border border-blue-700">
-                <p className="font-semibold">Game Completed</p>
-                <p>This game has been completed and closed.</p>
+        <div className="p-6 rounded-2xl shadow-lg bg-gradient-to-br from-gray-900 to-purple-900 border-2 border-purple-700/40 text-center">
+            <div className="flex flex-col items-center gap-2">
+                <span className="text-4xl">3c6</span>
+                <h2 className="text-2xl font-bold text-purple-300 mb-2">Game Completed</h2>
                 {isTie ? (
-                    <p className="mt-2 text-yellow-300">
-                        Game ended in a tie - Refund amount: {betAmount} SOL
-                    </p>
+                    <div className="text-yellow-300 font-semibold text-lg flex flex-col items-center">
+                        <span className="text-3xl mb-1">91d</span>
+                        Match ended in a <span className="underline">tie</span>!<br />
+                        <span className="text-sm mt-1">Refund: <span className="font-mono">{betAmount} GOR</span></span>
+                    </div>
                 ) : isWinner && !winningsClaimed ? (
-                    <button
-                        className="mt-3 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-black font-bold rounded transition-colors"
-                        onClick={handleClaimWinnings}
-                    >
-                        Claim Reward
-                    </button>
+                    <>
+                        <div className="text-green-400 font-bold text-lg flex flex-col items-center">
+                            <span className="text-3xl mb-1">3c6</span>
+                            Congratulations! You won!
+                        </div>
+                        <button
+                            className="mt-4 px-6 py-2 bg-yellow-400 hover:bg-yellow-500 text-black font-bold rounded-lg shadow transition-colors text-lg"
+                            onClick={handleClaimWinnings}
+                        >
+                            Claim Reward
+                        </button>
+                        <div className="text-sm text-gray-300 mt-2">Prize: <span className="font-mono">{betAmount * 2} GOR</span></div>
+                    </>
                 ) : isWinner && winningsClaimed ? (
-                    <p className="mt-2 text-green-300 font-semibold">Winnings claimed!</p>
-                ) : null}
-                <p className="mt-2">You can create a new game or join another one.</p>
+                    <div className="text-green-300 font-semibold text-lg flex flex-col items-center">
+                        <span className="text-3xl mb-1">389</span>
+                        Winnings claimed!
+                    </div>
+                ) : (
+                    <div className="text-red-300 font-semibold text-lg flex flex-col items-center">
+                        <span className="text-3xl mb-1">622</span>
+                        Better luck next time!
+                    </div>
+                )}
+                <div className="mt-4 text-gray-400 text-sm">You can create a new game or join another one.</div>
             </div>
         </div>
     );

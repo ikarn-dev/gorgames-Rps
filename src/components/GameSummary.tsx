@@ -19,10 +19,10 @@ const GameSummary: React.FC<GameSummaryProps> = ({ completed, p1Wins, p2Wins, be
                  'Game tied'}
             </p>
             <p className="text-sm text-gray-400">
-                Bet amount: {betAmount} SOL
+                Bet amount: {betAmount} GOR
             </p>
             <p className="text-sm text-yellow-400 font-semibold">
-                {isTie ? 'Refund Amount' : '🏆 Total Winnings'}: {totalWinnings} SOL
+                {isTie ? 'Refund Amount' : '🏆 Total Winnings'}: {totalWinnings} GOR
             </p>
         </div>
     ) : null

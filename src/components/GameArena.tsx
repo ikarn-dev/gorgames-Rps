@@ -13,7 +13,6 @@ import PlayerInfo from './PlayerInfo';
 import GameStatus from './GameStatus';
 import TurnIndicator from './TurnIndicator';
 import RoundProgress from './RoundProgress';
-import RoundComplete from './RoundComplete';
 import CommitMove from './CommitMove';
 import { Feedback } from './Feedback';
 
@@ -59,6 +58,7 @@ const GameArena: React.FC = () => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'warning' | 'info', message: string } | null>(null);
     const [roomReady, setRoomReady] = useState(false);
+    const [missingGameSince, setMissingGameSince] = useState<number | null>(null);
 
     const { gameState, loading: gameLoading, commitMove, revealMove, stopPolling } = useOnChainGame(gameJoinCode);
     
@@ -94,7 +94,7 @@ const GameArena: React.FC = () => {
                     newSet.delete(messageKey);
                     return newSet;
                 });
-            }, 5000);
+            }, 2000); // Auto-disappear after 2 seconds
         }
     }, [shownFeedbackMessages]);
 
@@ -207,14 +207,13 @@ const GameArena: React.FC = () => {
                 type: 'success', 
                 message: `Game "${code}" initialized successfully! Transaction: ${txId.slice(0, 8)}...` 
             });
-            setGameJoinCode(code);
-            setJoinCode(''); // Clear input after success
-            clearFeedback();
 
             // --- POLL FOR ROOM READINESS ---
             setRoomReady(false);
+            const confirmationTime = Date.now();
             let pollTries = 0;
-            const maxPollTries = 10;
+            const maxPollTries = 60; // poll for up to 60 seconds
+            let foundRoom = false;
             while (pollTries < maxPollTries) {
                 try {
                     const program = await getProgramFromWallet({ publicKey, disconnect, signTransaction });
@@ -226,16 +225,27 @@ const GameArena: React.FC = () => {
                     const gameAccount = await program.account.game.fetch(gamePda);
                     if (gameAccount && gameAccount.status && gameAccount.status.waiting !== undefined) {
                         setRoomReady(true);
+                        foundRoom = true;
                         break;
                     }
                 } catch (e) {
-                    console.error(e);
                     // Ignore fetch errors, just keep polling
                 }
                 await new Promise(res => setTimeout(res, 1000));
                 pollTries++;
+                // Only warn if 30 seconds have passed since confirmation
+                if (!foundRoom && Date.now() - confirmationTime > 30000 && pollTries % 5 === 0) {
+                    setFeedbackOnce({ type: 'warning', message: 'Room may not be ready yet. Please wait a moment before joining.' });
+                }
             }
-            if (!roomReady) setFeedbackOnce({ type: 'warning', message: 'Room may not be ready yet. Please wait a moment before joining.' });
+            if (foundRoom) {
+                setGameJoinCode(code);
+                setJoinCode('');
+                setRoomReady(true);
+                setFeedbackOnce({ type: 'success', message: `Game "${code}" created and ready!` });
+            } else {
+                setFeedbackOnce({ type: 'error', message: 'Room was not found after 60 seconds. Please try again.' });
+            }
             // --- END POLL ---
 
         } catch (error: unknown) {
@@ -264,9 +274,13 @@ const GameArena: React.FC = () => {
                     errorMessage += 'Wallet connection issue. Please reconnect your wallet.';
                 } else if ((error as unknown as { logs?: string[] })?.logs) {
                     errorMessage += `Contract error: ${(error as unknown as { logs: string[] }).logs.join(', ')}`;
+                } else if (error.message) {
+                    errorMessage += error.message;
                 } else {
-                    errorMessage += error.message || 'Unknown error occurred.';
+                    errorMessage += JSON.stringify(error);
                 }
+            } else {
+                errorMessage += JSON.stringify(error);
             }
             
             setFeedbackOnce({ type: 'error', message: errorMessage });
@@ -433,13 +447,10 @@ const GameArena: React.FC = () => {
                 throw new Error('Join verification failed - player was not added to the game');
             }
 
-            setFeedbackOnce({ 
-                type: 'success', 
-                message: `Successfully joined game "${code}"! Transaction: ${txId.slice(0, 8)}...` 
-            });
             setGameJoinCode(code);
-            setJoinCode(''); // Clear input after success
-            setJoinFeedbackShown(true); // Mark that join feedback has been shown
+            setJoinCode('');
+            setJoinFeedbackShown(true);
+            setFeedbackOnce({ type: 'success', message: `Successfully joined game "${code}"!` });
             clearFeedback();
 
         } catch (error: unknown) {
@@ -710,14 +721,19 @@ const GameArena: React.FC = () => {
 
     // Auto-clear gameJoinCode when game is completed and closed
     useEffect(() => {
-        if (gameJoinCode && !gameState && !gameLoading) {
-            // Game account doesn't exist (closed) - clear the game join code after a delay
+        // Only auto-exit if the game was completed (not just missing)
+        if (
+            gameJoinCode &&
+            !gameLoading &&
+            gameState &&
+            gameState.status &&
+            gameState.status.completed
+        ) {
             const timer = setTimeout(() => {
                 setGameJoinCode('');
                 setLastRoundResult(null);
-                setShownFeedbackMessages(new Set()); // Reset feedback tracking
-            }, 3000); // Give user 3 seconds to see the completion message
-            
+                setShownFeedbackMessages(new Set());
+            }, 3000);
             return () => clearTimeout(timer);
         }
     }, [gameJoinCode, gameState, gameLoading]);
@@ -924,12 +940,7 @@ const GameArena: React.FC = () => {
                 throw new Error('Transaction confirmation timeout');
             }
 
-            setFeedbackOnce({ 
-                type: 'success', 
-                message: `Winnings claimed successfully! Transaction: ${txId.slice(0, 8)}...` 
-            });
-
-            stopPolling();
+            setFeedbackOnce({ type: 'success', message: 'Winnings claimed! Returning to lobby.' });
             handleExitRoom();
 
         } catch (error: unknown) {
@@ -995,7 +1006,7 @@ const GameArena: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [gameJoinCode, publicKey, connected, disconnect, connection, signTransaction, stopPolling]);
+    }, [gameJoinCode, publicKey, connected, disconnect, connection, signTransaction, handleExitRoom]);
 
     // Cleanup effect to prevent memory leaks
     useEffect(() => {
@@ -1014,13 +1025,18 @@ const GameArena: React.FC = () => {
     // Auto-redirect when game state becomes null (account closed)
     useEffect(() => {
         if (gameJoinCode && !gameState && !gameLoading) {
-            console.log("Game state is null - account likely closed, redirecting to game creation");
-            // Small delay to allow any success messages to be shown
-            setTimeout(() => {
+            if (!missingGameSince) {
+                setMissingGameSince(Date.now());
+                setFeedbackOnce({ type: 'warning', message: 'Game not found. Retrying...' });
+            } else if (Date.now() - missingGameSince > 10000) { // 10 seconds grace
+                setFeedbackOnce({ type: 'error', message: 'Game closed or not found. Returning to lobby.' });
                 handleExitRoom();
-            }, 1000);
+                setMissingGameSince(null);
+            }
+        } else {
+            if (missingGameSince) setMissingGameSince(null); // Reset if gameState returns
         }
-    }, [gameState, gameJoinCode, gameLoading, handleExitRoom]);
+    }, [gameState, gameJoinCode, gameLoading, handleExitRoom, missingGameSince, setFeedbackOnce]);
 
     // Debug logging for game state changes
     useEffect(() => {
@@ -1165,6 +1181,7 @@ const GameArena: React.FC = () => {
                             copyStatus={copyStatus}
                             roundResults={roundResults}
                             roomReady={roomReady}
+                            walletReady={connected && !!publicKey}
                         />
                     </div>
                 ) : (
@@ -1258,24 +1275,6 @@ const GameArena: React.FC = () => {
                                 </div>
                             {gameState?.player1_move && gameState?.player2_move && (
                                     <div className="bg-gray-800/90 backdrop-blur-sm rounded-lg p-4">
-                                <RoundComplete
-                                    round={gameState.total_rounds || 0}
-                                    player1Move={getMoveName(gameState.player1_move.rock ? 0 : gameState.player1_move.paper ? 1 : 2)}
-                                    player2Move={getMoveName(gameState.player2_move.rock ? 0 : gameState.player2_move.paper ? 1 : 2)}
-                                    winner={getRoundWinner(
-                                        gameState.player1_move.rock ? 0 : gameState.player1_move.paper ? 1 : 2,
-                                        gameState.player2_move.rock ? 0 : gameState.player2_move.paper ? 1 : 2
-                                    )}
-                                    p1Score={gameState.rounds_won_p1 || 0}
-                                    p2Score={gameState.rounds_won_p2 || 0}
-                                    betAmount={gameState.bet_amount ? (gameState.bet_amount.toNumber() / 1e9).toFixed(2) : '0.05'}
-                                    totalWinnings={gameState.bet_amount ? ((gameState.bet_amount.toNumber() * 2) / 1e9).toFixed(2) : '0.10'}
-                                    notification={true}
-                                />
-                                </div>
-                            )}
-                        {gameState?.status?.completed && (
-                                    <div className="bg-gray-800/90 backdrop-blur-sm rounded-lg p-4">
                                 <GameCompletion
                                     gameJoinCode={gameJoinCode}
                                     gameState={gameState}
@@ -1289,20 +1288,6 @@ const GameArena: React.FC = () => {
                             </div>
                                     </div>
                                     
-                        {/* Slide-in round result notification */}
-                        {lastRoundResult && (
-                            <RoundComplete
-                                round={lastRoundResult.round}
-                                player1Move={lastRoundResult.player1Move}
-                                player2Move={lastRoundResult.player2Move}
-                                winner={lastRoundResult.winner}
-                                p1Score={lastRoundResult.p1Score}
-                                p2Score={lastRoundResult.p2Score}
-                                betAmount={gameState?.bet_amount ? (gameState.bet_amount.toNumber() / 1e9).toFixed(2) : '0.05'}
-                                totalWinnings={gameState?.bet_amount ? ((gameState.bet_amount.toNumber() * 2) / 1e9).toFixed(2) : '0.10'}
-                                notification={true}
-                            />
-                        )}
                         {/* Game Controls */}
                         <div className="mt-6 mb-8">
                             <div className="max-w-xs mx-auto">
@@ -1316,31 +1301,21 @@ const GameArena: React.FC = () => {
             </div>
 
             {/* Bottom right notification and network status */}
-            <div className="pointer-events-none relative">
-                {lastRoundResult && (
-                    <RoundComplete
-                        round={lastRoundResult.round}
-                        player1Move={lastRoundResult.player1Move}
-                        player2Move={lastRoundResult.player2Move}
-                        winner={lastRoundResult.winner}
-                        p1Score={lastRoundResult.p1Score}
-                        p2Score={lastRoundResult.p2Score}
-                        betAmount={gameState?.bet_amount ? (gameState.bet_amount.toNumber() / 1e9).toFixed(2) : '0.05'}
-                        totalWinnings={gameState?.bet_amount ? ((gameState.bet_amount.toNumber() * 2) / 1e9).toFixed(2) : '0.10'}
-                        notification={true}
-                    />
-                )}
+            <div className="pointer-events-none fixed bottom-4 right-4 z-50 flex flex-col items-end gap-2">
+                <div className="max-w-md w-full pointer-events-auto mb-2">
+                    <Feedback feedback={feedback} onClose={() => setFeedback(null)} />
+                </div>
                 {connected && connection?.rpcEndpoint === 'https://rpc.gorbagana.wtf' && (
-                    <div className="fixed bottom-2 right-2 text-[10px] bg-gray-800/90 backdrop-blur-sm px-2 py-1 rounded-full pointer-events-auto">
-                        <p className="text-green-400 font-medium" style={{ textShadow: '0 0 4px #22c55e' }}>
-                            Connected to gorbagana testnet
-                        </p>
+                    <div className="pointer-events-auto">
+                        <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-900 border border-green-400">
+                            <span className="w-2 h-2 rounded-full bg-green-400"></span>
+                            <span className="text-xs font-bold text-white tracking-wide">
+                                Connected to <span className="text-green-200">Gorbagana</span> testnet
+                            </span>
+                        </div>
                     </div>
                 )}
             </div>
-
-            {/* Feedback component */}
-            <Feedback feedback={feedback} onClose={() => setFeedback(null)} />
         </div>
     );
 };

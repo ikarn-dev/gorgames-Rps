@@ -14,6 +14,7 @@ interface GameControlButtonsProps {
     isCreating: boolean;
     isJoining: boolean;
     roomReady: boolean;
+    walletReady: boolean;
     
     // Button handlers
     handleInitializeGame: () => void;
@@ -40,10 +41,12 @@ export const GameControlButtons: React.FC<GameControlButtonsProps> = ({
     isCreating,
     isJoining,
     roomReady,
+    walletReady,
     handleInitializeGame,
     handleJoinGame,
     handleCommitMove,
     handleClaimWinnings,
+    handleExitRoom,
     handleCopyRoomId,
     joinCode,
     setJoinCode,
@@ -57,14 +60,15 @@ export const GameControlButtons: React.FC<GameControlButtonsProps> = ({
             <CreateGame
                 joinCode={joinCode}
                 setJoinCode={setJoinCode}
-                betAmount={betAmount}
-                setBetAmount={setBetAmount}
+                betAmount="0.05"
+                setBetAmount={() => {}}
                 isLoading={isLoading}
                 isCreating={isCreating}
                 isJoining={isJoining}
                 handleInitializeGame={handleInitializeGame}
                 handleJoinGame={handleJoinGame}
                 roomReady={roomReady}
+                walletReady={walletReady}
             />
         );
     }

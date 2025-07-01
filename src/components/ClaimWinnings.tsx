@@ -28,7 +28,7 @@ const ClaimWinnings: React.FC<ClaimWinningsProps> = ({
                     {isLoading ? 'Processing...' : '↩️ Claim Refund'}
                 </button>
                 <p className="text-xs text-gray-400 mt-1 text-center">
-                    Game tied! Click to claim your refund of {betAmount} SOL
+                    Game tied! Click to claim your refund of {betAmount} GOR
                 </p>
             </div>
         );

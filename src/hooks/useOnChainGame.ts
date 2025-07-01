@@ -64,27 +64,12 @@ function useOnChainGame(joinCode: string): UseOnChainGameReturn {
 
   // Derive game PDA using joinCode
   useEffect(() => {
-    console.log("useOnChainGame useEffect triggered:", {
-      joinCode,
-      wallet: wallet ? "exists" : "null",
-      walletAdapter: wallet?.adapter ? "exists" : "null",
-      walletPublicKey: wallet?.adapter?.publicKey?.toBase58()
-    });
-    
-    if (!joinCode || !wallet || !publicKey) {
-      console.log("useOnChainGame useEffect early return:", {
-        noJoinCode: !joinCode,
-        noWallet: !wallet,
-        noPublicKey: !publicKey
-      });
-      return;
-    }
-    
+    if (!joinCode || !wallet || !publicKey) return;
+    setLoading(true); // Set loading immediately when joinCode changes
     const initProgram = async () => {
       try {
         const program = await getProgramFromWallet(wallet);
         const joinCodeBytes = new TextEncoder().encode(joinCode.padEnd(8, "\0")).slice(0, 8);
-        
         const [pda] = await PublicKey.findProgramAddress(
           [Buffer.from("game"), joinCodeBytes],
           program.programId
@@ -94,7 +79,6 @@ function useOnChainGame(joinCode: string): UseOnChainGameReturn {
         setError(e instanceof Error ? e.message : "Failed to initialize program");
       }
     };
-    
     initProgram();
   }, [joinCode, wallet, publicKey]);
 
@@ -170,6 +154,19 @@ function useOnChainGame(joinCode: string): UseOnChainGameReturn {
       
       console.log("Processed account data:", JSON.stringify(finalProcessedAccount, null, 2));
       
+      // Wallet pubkey verification
+      if (
+        publicKey &&
+        account.player1 &&
+        account.player1.toBase58 &&
+        publicKey.toBase58() !== account.player1.toBase58() &&
+        (!account.player2 || (account.player2.toBase58 && publicKey.toBase58() !== account.player2.toBase58()))
+      ) {
+        setError('Connected wallet is not a participant in this game.');
+        setGameState(null);
+        return;
+      }
+      
       setGameState(finalProcessedAccount as unknown as GameState);
       console.log("Game state set successfully");
       console.log('Game state loaded successfully'); // Background logging
@@ -199,15 +196,23 @@ function useOnChainGame(joinCode: string): UseOnChainGameReturn {
     }
   }, [gamePda, wallet, publicKey, lastFetchTime]);
 
+  // Exponential backoff polling
   useEffect(() => {
     if (!gamePda) {
       console.log("No gamePda, stopping polling");
       return;
     }
-    fetchGame();
-    // Reduce polling frequency to prevent excessive calls
-    const interval = setInterval(fetchGame, 5000); // Changed from 3000 to 5000ms
-    return () => clearInterval(interval);
+    let intervalMs = 2000;
+    let stopped = false;
+    const poll = async () => {
+      while (!stopped) {
+        await fetchGame();
+        await new Promise(res => setTimeout(res, intervalMs));
+        if (intervalMs < 10000) intervalMs *= 1.5; // Exponential backoff up to 10s
+      }
+    };
+    poll();
+    return () => { stopped = true; };
   }, [gamePda, fetchGame]);
 
   const commitMove = async (commit: Uint8Array) => {
