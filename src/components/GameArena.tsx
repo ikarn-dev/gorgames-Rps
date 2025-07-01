@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useCallback, useEffect } from 'react';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
@@ -32,7 +33,7 @@ const GameArena: React.FC = () => {
     const [isDisconnecting, setIsDisconnecting] = useState(false);
 
     const [joinCode, setJoinCode] = useState('');
-    const [betAmount, setBetAmount] = useState('0.05');
+    const [betAmount] = useState('0.05');
     const [isLoading, setIsLoading] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
     const [isJoining, setIsJoining] = useState(false);
@@ -43,7 +44,6 @@ const GameArena: React.FC = () => {
     const [hasRevealed, setHasRevealed] = useState<string | null>(null);
     const [showNextRoundCountdown, setShowNextRoundCountdown] = useState(false);
     const [joinFeedbackShown, setJoinFeedbackShown] = useState(false);
-    const [roundResults, setRoundResults] = useState<Array<{round: number, player1Move: string, player2Move: string, winner: string}>>([]);
     const [shownFeedbackMessages, setShownFeedbackMessages] = useState<Set<string>>(new Set());
     const [copyStatus, setCopyStatus] = useState<string>('Copy');
     const [shownRounds, setShownRounds] = useState<Set<number>>(new Set());
@@ -279,7 +279,7 @@ const GameArena: React.FC = () => {
         } finally {
             setIsCreating(false);
         }
-    }, [publicKey, connected, signTransaction, joinCode, betAmount, connection, clearFeedback, setFeedbackOnce, gameJoinCode]);
+    }, [publicKey, connected, signTransaction, joinCode, betAmount, connection, clearFeedback, setFeedbackOnce]);
 
     const handleJoinGame = useCallback(async () => {
         if (!publicKey || !connected || !disconnect) {
@@ -624,7 +624,7 @@ const GameArena: React.FC = () => {
                 message: '⏰ Opponent is waiting for your move! Make your selection.' 
             });
         }
-    }, [gameState, publicKey, setFeedbackOnce, isAutoRevealing, hasRevealed, gameJoinCode]);
+    }, [gameState?.player1_commit, gameState?.player2_commit, publicKey, setFeedbackOnce, isAutoRevealing, hasRevealed, gameJoinCode]);
 
     // Turn notification system
     useEffect(() => {
@@ -668,7 +668,7 @@ const GameArena: React.FC = () => {
                 setShownRounds(prev => new Set(prev).add(roundNum));
             }
         }
-    }, [gameState, publicKey, setFeedbackOnce, isAutoRevealing, hasRevealed, showNextRoundCountdown, gameJoinCode, shownRounds]);
+    }, [gameState?.player1_commit, gameState?.player2_commit, gameState?.player1_move, gameState?.player2_move, publicKey, setFeedbackOnce, isAutoRevealing, hasRevealed, showNextRoundCountdown, gameJoinCode, shownRounds]);
 
     // Monitor for player joins
     useEffect(() => {
@@ -696,12 +696,11 @@ const GameArena: React.FC = () => {
                 }, 1000); // 1 second delay
             }
         }
-    }, [gameState, publicKey, setFeedbackOnce, joinFeedbackShown, gameJoinCode, isJoining]);
+    }, [gameState?.player2, publicKey, setFeedbackOnce, joinFeedbackShown, gameJoinCode, gameState?.status, isJoining]);
 
     // Reset join feedback flag when game changes
     useEffect(() => {
         setJoinFeedbackShown(false);
-        setRoundResults([]);
         setCommittedSalt(null);
         setCommittedMove(null);
         setHasRevealed(null);
@@ -722,7 +721,6 @@ const GameArena: React.FC = () => {
         ) {
             const timer = setTimeout(() => {
                 setGameJoinCode('');
-                setShownFeedbackMessages(new Set());
             }, 3000);
             return () => clearTimeout(timer);
         }
@@ -732,14 +730,13 @@ const GameArena: React.FC = () => {
     const handleExitRoom = useCallback(() => {
         setGameJoinCode('');
         setJoinCode('');
-        setRoundResults([]);
         setCommittedSalt(null);
         setCommittedMove(null);
         setHasRevealed(null);
         setIsAutoRevealing(false);
         setJoinFeedbackShown(false);
         setShowNextRoundCountdown(false);
-        setShownFeedbackMessages(new Set());
+        setShownRounds(new Set());
     }, []);
 
     // Helper function to determine round winner
@@ -786,221 +783,6 @@ const GameArena: React.FC = () => {
             }
         }
     }, [gameState?.player1_move, gameState?.player2_move, gameState?.player1_commit, gameState?.player2_commit, gameState?.total_rounds, showNextRoundCountdown]);
-
-    // Handle round completion and calculate results
-    useEffect(() => {
-        // Only process if we have valid moves and the game is actually in progress
-        if (gameState && 
-            gameState.player1_move && 
-            gameState.player2_move && 
-            gameState.status?.inProgress) {
-            
-            console.log("Round completion detected:", {
-                total_rounds: gameState.total_rounds,
-                player1_move: gameState.player1_move,
-                player2_move: gameState.player2_move,
-                rounds_won_p1: gameState.rounds_won_p1,
-                rounds_won_p2: gameState.rounds_won_p2,
-                status: gameState.status
-            });
-            
-            // Calculate the current round number correctly
-            // When moves are revealed, this is the round that just completed
-            // If total_rounds is 1, this means round 1 just completed
-            // If total_rounds is 2, this means round 2 just completed
-            const currentRound = gameState.total_rounds || 1;
-            const player1Move = gameState.player1_move.rock ? 0 : gameState.player1_move.paper ? 1 : 2;
-            const player2Move = gameState.player2_move.rock ? 0 : gameState.player2_move.paper ? 1 : 2;
-            const roundWinner = getRoundWinner(player1Move, player2Move);
-            
-            console.log("Calculated round result:", {
-                currentRound,
-                player1Move: getMoveName(player1Move),
-                player2Move: getMoveName(player2Move),
-                roundWinner
-            });
-            
-            // Add round result if not already added
-            const roundResult = {
-                round: currentRound,
-                player1Move: getMoveName(player1Move),
-                player2Move: getMoveName(player2Move),
-                winner: roundWinner
-            };
-            
-            // Store the last round result for persistent display
-            setRoundResults(prev => {
-                console.log("Current round results:", prev);
-                // Check if this round result is already in the array
-                const exists = prev.some(result => result.round === currentRound);
-                if (!exists) {
-                    console.log("Adding round result:", roundResult);
-                    return [...prev, roundResult];
-                } else {
-                    console.log("Round result already exists for round:", currentRound);
-                }
-                return prev;
-            });
-        }
-    }, [gameState?.player1_move, gameState?.player2_move, gameState?.total_rounds, gameState?.rounds_won_p1, gameState?.rounds_won_p2, gameState?.status]);
-
-    // Claim winnings function - Fixed to handle PDA data issue
-    const handleClaimWinnings = useCallback(async () => {
-        if (!gameJoinCode || !publicKey || !connected || !disconnect) {
-            setFeedbackOnce({ type: 'error', message: 'Please connect your wallet first.' });
-            return;
-        }
-
-        setIsLoading(true);
-        setFeedbackOnce({ type: 'info', message: 'Claiming winnings...' });
-
-        try {
-            const program = await getProgramFromWallet({
-                publicKey,
-                disconnect,
-                signTransaction,
-            });
-            
-            // Convert join code to bytes
-            const joinCodeBytes = Array.from(new TextEncoder().encode(gameJoinCode.padEnd(8, '\0')).slice(0, 8));
-            
-            // Derive the game PDA
-            const [gamePda] = await PublicKey.findProgramAddress(
-                [Buffer.from("game"), Buffer.from(joinCodeBytes)],
-                program.programId
-            );
-
-            // Create the transaction with proper account structure
-            const tx = await program.methods
-                .claimWinnings()
-                .accounts({
-                    game: gamePda,
-                    winner: publicKey,
-                    systemProgram: SystemProgram.programId,
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                } as any)
-                .transaction();
-
-            // Sign and send transaction manually
-            const latestBlockhash = await connection.getLatestBlockhash();
-            if (!signTransaction) {
-                throw new Error('Wallet does not support transaction signing');
-            }
-            tx.recentBlockhash = latestBlockhash.blockhash;
-            tx.feePayer = publicKey;
-            
-            const signedTx = await signTransaction(tx);
-            const txId = await connection.sendRawTransaction(signedTx.serialize());
-            
-            // Confirm using polling
-            let confirmation = null;
-            let retries = 0;
-            const maxRetries = 30;
-            
-            while (retries < maxRetries) {
-                try {
-                    const status = await connection.getSignatureStatus(txId);
-                    if (status.value?.confirmationStatus === 'confirmed' || status.value?.confirmationStatus === 'finalized') {
-                        confirmation = status;
-                        break;
-                    }
-                    if (status.value?.err) {
-                        throw new Error(`Transaction failed: ${JSON.stringify(status.value.err)}`);
-                    }
-                } catch (error: unknown) {
-                    if (error instanceof Error && error.message.includes('Transaction failed')) {
-                        throw error;
-                    }
-                }
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                retries++;
-            }
-            
-            if (!confirmation) {
-                throw new Error('Transaction confirmation timeout');
-            }
-
-            setFeedbackOnce({ type: 'success', message: 'Winnings claimed! Returning to lobby.' });
-            handleExitRoom();
-
-        } catch (error: unknown) {
-            console.error("Failed to claim winnings:", error);
-            
-            // Safely extract error details
-            const errorDetails = {
-                message: error instanceof Error ? error.message : 'Unknown error',
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                logs: Array.isArray((error as any)?.logs) ? (error as any).logs : [],
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                error: (error as any)?.error,
-                stack: error instanceof Error ? error.stack : undefined
-            };
-            
-            console.error("Error details:", errorDetails);
-            
-            let errorMessage = 'Failed to claim winnings. ';
-            
-            if (error instanceof Error) {
-                if (error.message?.includes('insufficient funds')) {
-                    errorMessage += 'Insufficient SOL for transaction fees.';
-                } else if (error.message?.includes('Game not completed')) {
-                    errorMessage += 'Game is not completed yet.';
-                } else if (error.message?.includes('Not the winner')) {
-                    errorMessage += 'Only the winner can claim winnings.';
-                } else if (error.message?.includes('Already claimed')) {
-                    errorMessage += 'Winnings have already been claimed.';
-                } else if (error.message?.includes('invalid program argument')) {
-                    errorMessage += 'Smart contract error. The game account may have data that prevents direct transfer.';
-                } else if (error.message?.includes('Account does not exist') || error.message?.includes('AccountNotInitialized')) {
-                    errorMessage += 'Game account not found. The game may have been closed already.';
-                } else if (error.message?.includes('0x1770') || error.message?.includes('6000')) {
-                    errorMessage += 'Game is not in completed state.';
-                } else if (error.message?.includes('0x1771') || error.message?.includes('6001')) {
-                    errorMessage += 'You are not the winner of this game.';
-                } else if (error.message?.includes('0x1772') || error.message?.includes('6002')) {
-                    errorMessage += 'Winnings have already been claimed.';
-                } else if (error.message?.includes('0x1773') || error.message?.includes('6003')) {
-                    errorMessage += 'Game has timed out.';
-                } else if (error.message?.includes('0xbc4') || error.message?.includes('3012')) {
-                    errorMessage += 'Game account is not initialized. The game may have been closed already.';
-                } else if ((error as unknown as { logs?: string[] })?.logs) {
-                    const logs = (error as unknown as { logs: string[] }).logs;
-                    console.log("Contract logs:", logs);
-                    if (logs.some(log => log.includes('Game not completed'))) {
-                        errorMessage += 'Game is not completed yet.';
-                    } else if (logs.some(log => log.includes('Not the winner'))) {
-                        errorMessage += 'Only the winner can claim winnings.';
-                    } else if (logs.some(log => log.includes('Already claimed'))) {
-                        errorMessage += 'Winnings have already been claimed.';
-                    } else if (logs.some(log => log.includes('AccountNotInitialized'))) {
-                        errorMessage += 'Game account is not initialized. The game may have been closed already.';
-                    } else {
-                        errorMessage += `Contract error: ${logs.join(', ')}`;
-                    }
-                } else {
-                    errorMessage += error.message || 'Unknown error occurred.';
-                }
-            }
-            
-            setFeedbackOnce({ type: 'error', message: errorMessage });
-        } finally {
-            setIsLoading(false);
-        }
-    }, [gameJoinCode, publicKey, connected, disconnect, connection, signTransaction, handleExitRoom, setFeedbackOnce]);
-
-    // Cleanup effect to prevent memory leaks
-    useEffect(() => {
-        return () => {
-            // Clear any pending timeouts when component unmounts
-            setShowNextRoundCountdown(false);
-            setCommittedSalt(null);
-            setCommittedMove(null);
-            setHasRevealed(null);
-            setIsAutoRevealing(false);
-            setJoinFeedbackShown(false);
-            setRoundResults([]);
-        };
-    }, []);
 
     // Auto-redirect when game state becomes null (account closed)
     useEffect(() => {
@@ -1049,6 +831,90 @@ const GameArena: React.FC = () => {
         }
     };
     
+    // Claim winnings function - Fixed to handle PDA data issue
+    const handleClaimWinnings = useCallback(async () => {
+        if (!gameJoinCode || !publicKey || !connected || !disconnect) {
+            setFeedbackOnce({ type: 'error', message: 'Please connect your wallet first.' });
+            return;
+        }
+
+        setIsLoading(true);
+        setFeedbackOnce({ type: 'info', message: 'Claiming winnings...' });
+
+        try {
+            const program = await getProgramFromWallet({
+                publicKey,
+                disconnect,
+                signTransaction,
+            });
+            // Convert join code to bytes
+            const joinCodeBytes = Array.from(new TextEncoder().encode(gameJoinCode.padEnd(8, '\0')).slice(0, 8));
+            // Derive the game PDA
+            const [gamePda] = await PublicKey.findProgramAddress(
+                [Buffer.from("game"), Buffer.from(joinCodeBytes)],
+                program.programId
+            );
+            // Create the transaction with proper account structure
+            const tx = await program.methods
+                .claimWinnings()
+                .accounts({
+                    game: gamePda,
+                    winner: publicKey,
+                    systemProgram: SystemProgram.programId,
+                } as any)
+                .transaction();
+            // Sign and send transaction manually
+            const latestBlockhash = await connection.getLatestBlockhash();
+            if (!signTransaction) {
+                throw new Error('Wallet does not support transaction signing');
+            }
+            tx.recentBlockhash = latestBlockhash.blockhash;
+            tx.feePayer = publicKey;
+            const signedTx = await signTransaction(tx);
+            const txId = await connection.sendRawTransaction(signedTx.serialize());
+            // Confirm using polling
+            let confirmation = null;
+            let retries = 0;
+            const maxRetries = 30;
+            while (retries < maxRetries) {
+                try {
+                    const status = await connection.getSignatureStatus(txId);
+                    if (status.value?.confirmationStatus === 'confirmed' || status.value?.confirmationStatus === 'finalized') {
+                        confirmation = status;
+                        break;
+                    }
+                    if (status.value?.err) {
+                        throw new Error(`Transaction failed: ${JSON.stringify(status.value.err)}`);
+                    }
+                } catch (error: unknown) {
+                    if (error instanceof Error && error.message.includes('Transaction failed')) {
+                        throw error;
+                    }
+                }
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                retries++;
+            }
+            if (!confirmation) {
+                throw new Error('Transaction confirmation timeout');
+            }
+            setFeedbackOnce({ type: 'success', message: 'Winnings claimed! Returning to lobby.' });
+            handleExitRoom();
+        } catch (error: unknown) {
+            console.error("Failed to claim winnings:", error);
+            let errorMessage = 'Failed to claim winnings. ';
+            if (error instanceof Error && error.message) {
+                errorMessage += error.message;
+            } else if (typeof error === 'string') {
+                errorMessage += error;
+            } else {
+                errorMessage += 'Unknown error occurred.';
+            }
+            setFeedbackOnce({ type: 'error', message: errorMessage });
+        } finally {
+            setIsLoading(false);
+        }
+    }, [gameJoinCode, publicKey, connected, disconnect, connection, signTransaction, handleExitRoom, setFeedbackOnce]);
+
     // UI Rendering
     return (
         <div className="min-h-screen w-full flex flex-col items-center justify-start font-mono relative">
@@ -1152,6 +1018,7 @@ const GameArena: React.FC = () => {
                             handleJoinGame={handleJoinGame}
                             handleCommitMove={handleCommitMove}
                             handleClaimWinnings={handleClaimWinnings}
+                            handleExitRoom={handleExitRoom}
                             handleCopyRoomId={handleCopyRoomId}
                             joinCode={joinCode}
                             setJoinCode={setJoinCode}
