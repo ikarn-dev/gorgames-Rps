@@ -214,8 +214,10 @@ const GameArena: React.FC = () => {
             console.error("Failed to initialize game:", error);
             console.error("Error details:", {
                 message: error instanceof Error ? error.message : 'Unknown error',
-                logs: (error as unknown as { logs?: string[] })?.logs,
-                error: (error as unknown as { error?: unknown })?.error,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                logs: Array.isArray((error as any)?.logs) ? (error as any).logs : [],
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                error: (error as any)?.error,
                 stack: error instanceof Error ? error.stack : undefined
             });
             
@@ -903,7 +905,9 @@ const GameArena: React.FC = () => {
             // Safely extract error details
             const errorDetails = {
                 message: error instanceof Error ? error.message : 'Unknown error',
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 logs: Array.isArray((error as any)?.logs) ? (error as any).logs : [],
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 error: (error as any)?.error,
                 stack: error instanceof Error ? error.stack : undefined
             };
