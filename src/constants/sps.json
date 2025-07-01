@@ -1,0 +1,1063 @@
+{
+  "accounts": [
+    {
+      "discriminator": [
+        27,
+        90,
+        166,
+        125,
+        74,
+        100,
+        121,
+        18
+      ],
+      "name": "Game"
+    }
+  ],
+  "address": "E4DyKAucV3EdC2sQDuFYujDcoro3MhSb4FhQ1ZbFGdSi",
+  "errors": [
+    {
+      "code": 6000,
+      "msg": "Join code cannot be empty.",
+      "name": "InvalidJoinCode"
+    },
+    {
+      "code": 6001,
+      "msg": "Bet amount must be exactly 0.05 SOL.",
+      "name": "InvalidBetAmount"
+    },
+    {
+      "code": 6002,
+      "msg": "A second player has already joined the game.",
+      "name": "AlreadyJoined"
+    },
+    {
+      "code": 6003,
+      "msg": "You cannot join your own game.",
+      "name": "CannotJoinOwnGame"
+    },
+    {
+      "code": 6004,
+      "msg": "Invalid game state for this action.",
+      "name": "InvalidGameStatus"
+    },
+    {
+      "code": 6005,
+      "msg": "Unauthorized action.",
+      "name": "Unauthorized"
+    },
+    {
+      "code": 6006,
+      "msg": "The game is not ready yet.",
+      "name": "GameNotReady"
+    },
+    {
+      "code": 6007,
+      "msg": "This game ended in a draw. Use claim_draw_refund instead.",
+      "name": "GameIsADraw"
+    },
+    {
+      "code": 6008,
+      "msg": "Refund not allowed in current game state.",
+      "name": "RefundNotAllowed"
+    },
+    {
+      "code": 6009,
+      "msg": "Player already refunded.",
+      "name": "AlreadyRefunded"
+    },
+    {
+      "code": 6010,
+      "msg": "Game has timed out.",
+      "name": "GameTimedOut"
+    },
+    {
+      "code": 6011,
+      "msg": "Game is not expired enough for cleanup.",
+      "name": "GameNotExpired"
+    },
+    {
+      "code": 6012,
+      "msg": "Cannot cleanup yet - conditions not met.",
+      "name": "CannotCleanupYet"
+    },
+    {
+      "code": 6013,
+      "msg": "Mathematical overflow occurred.",
+      "name": "MathOverflow"
+    },
+    {
+      "code": 6014,
+      "msg": "Insufficient balance for this operation.",
+      "name": "InsufficientBalance"
+    },
+    {
+      "code": 6015,
+      "msg": "Player has already committed a move this round.",
+      "name": "AlreadyCommitted"
+    },
+    {
+      "code": 6016,
+      "msg": "Player has already revealed their move this round.",
+      "name": "AlreadyRevealed"
+    },
+    {
+      "code": 6017,
+      "msg": "Player must commit their move before revealing.",
+      "name": "MustCommitFirst"
+    },
+    {
+      "code": 6018,
+      "msg": "Revealed move does not match committed hash.",
+      "name": "InvalidReveal"
+    },
+    {
+      "code": 6019,
+      "msg": "This action is only valid for games that ended in a draw.",
+      "name": "GameNotADraw"
+    },
+    {
+      "code": 6020,
+      "msg": "Invalid move provided.",
+      "name": "InvalidMove"
+    },
+    {
+      "code": 6021,
+      "msg": "Commit hash cannot be empty.",
+      "name": "InvalidCommit"
+    },
+    {
+      "code": 6022,
+      "msg": "Salt value too weak. Use a larger random number.",
+      "name": "WeakSalt"
+    },
+    {
+      "code": 6023,
+      "msg": "Game has exceeded maximum number of rounds.",
+      "name": "TooManyRounds"
+    },
+    {
+      "code": 6024,
+      "msg": "Funds are still available for refund.",
+      "name": "FundsStillAvailable"
+    },
+    {
+      "code": 6025,
+      "msg": "A refund has already been claimed for this game.",
+      "name": "RefundAlreadyClaimed"
+    }
+  ],
+  "events": [
+    {
+      "discriminator": [
+        69,
+        18,
+        9,
+        249,
+        93,
+        112,
+        186,
+        255
+      ],
+      "name": "GameCleaned"
+    },
+    {
+      "discriminator": [
+        103,
+        26,
+        106,
+        108,
+        240,
+        191,
+        179,
+        120
+      ],
+      "name": "GameCompleted"
+    },
+    {
+      "discriminator": [
+        218,
+        25,
+        150,
+        94,
+        177,
+        112,
+        96,
+        2
+      ],
+      "name": "GameCreated"
+    },
+    {
+      "discriminator": [
+        39,
+        144,
+        49,
+        106,
+        108,
+        210,
+        183,
+        38
+      ],
+      "name": "PlayerJoined"
+    },
+    {
+      "discriminator": [
+        249,
+        16,
+        159,
+        159,
+        93,
+        186,
+        145,
+        206
+      ],
+      "name": "RefundIssued"
+    },
+    {
+      "discriminator": [
+        65,
+        194,
+        3,
+        183,
+        49,
+        1,
+        215,
+        5
+      ],
+      "name": "RoundCompleted"
+    },
+    {
+      "discriminator": [
+        187,
+        184,
+        29,
+        196,
+        54,
+        117,
+        70,
+        150
+      ],
+      "name": "WinningsClaimed"
+    }
+  ],
+  "instructions": [
+    {
+      "accounts": [
+        {
+          "name": "game",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  97,
+                  109,
+                  101
+                ]
+              },
+              {
+                "account": "Game",
+                "kind": "account",
+                "path": "game.join_code"
+              }
+            ]
+          },
+          "writable": true
+        },
+        {
+          "name": "player",
+          "signer": true,
+          "writable": true
+        },
+        {
+          "address": "11111111111111111111111111111111",
+          "name": "system_program"
+        }
+      ],
+      "args": [],
+      "discriminator": [
+        233,
+        191,
+        221,
+        132,
+        48,
+        126,
+        38,
+        202
+      ],
+      "docs": [
+        "Handle refunds for drawn games"
+      ],
+      "name": "claim_draw_refund"
+    },
+    {
+      "accounts": [
+        {
+          "name": "game",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  97,
+                  109,
+                  101
+                ]
+              },
+              {
+                "account": "Game",
+                "kind": "account",
+                "path": "game.join_code"
+              }
+            ]
+          },
+          "writable": true
+        },
+        {
+          "name": "winner",
+          "signer": true,
+          "writable": true
+        },
+        {
+          "address": "11111111111111111111111111111111",
+          "name": "system_program"
+        }
+      ],
+      "args": [],
+      "discriminator": [
+        161,
+        215,
+        24,
+        59,
+        14,
+        236,
+        242,
+        221
+      ],
+      "docs": [
+        "Claim winnings and close the game account using proper PDA closing"
+      ],
+      "name": "claim_winnings"
+    },
+    {
+      "accounts": [
+        {
+          "name": "game",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  97,
+                  109,
+                  101
+                ]
+              },
+              {
+                "account": "Game",
+                "kind": "account",
+                "path": "game.join_code"
+              }
+            ]
+          },
+          "writable": true
+        },
+        {
+          "name": "player1",
+          "signer": true,
+          "writable": true
+        }
+      ],
+      "args": [],
+      "discriminator": [
+        93,
+        240,
+        111,
+        188,
+        245,
+        124,
+        130,
+        114
+      ],
+      "docs": [
+        "Improved cleanup with proper conditions and authorization"
+      ],
+      "name": "cleanup_expired_game"
+    },
+    {
+      "accounts": [
+        {
+          "name": "game",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  97,
+                  109,
+                  101
+                ]
+              },
+              {
+                "account": "Game",
+                "kind": "account",
+                "path": "game.join_code"
+              }
+            ]
+          },
+          "writable": true
+        },
+        {
+          "name": "player",
+          "signer": true
+        },
+        {
+          "address": "11111111111111111111111111111111",
+          "name": "system_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "commit",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ],
+      "discriminator": [
+        27,
+        16,
+        69,
+        212,
+        175,
+        110,
+        123,
+        189
+      ],
+      "docs": [
+        "Commit a move (hash of move + salt)"
+      ],
+      "name": "commit_move"
+    },
+    {
+      "accounts": [
+        {
+          "name": "game",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  97,
+                  109,
+                  101
+                ]
+              },
+              {
+                "account": "Game",
+                "kind": "account",
+                "path": "game.join_code"
+              }
+            ]
+          },
+          "writable": true
+        },
+        {
+          "name": "rent_receiver",
+          "signer": true,
+          "writable": true
+        }
+      ],
+      "args": [],
+      "discriminator": [
+        87,
+        8,
+        66,
+        155,
+        174,
+        10,
+        233,
+        145
+      ],
+      "docs": [
+        "Force cleanup for completely abandoned games (restricted to game participants)"
+      ],
+      "name": "force_cleanup_abandoned"
+    },
+    {
+      "accounts": [
+        {
+          "name": "game",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  97,
+                  109,
+                  101
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "join_code"
+              }
+            ]
+          },
+          "writable": true
+        },
+        {
+          "name": "player1",
+          "signer": true,
+          "writable": true
+        },
+        {
+          "address": "11111111111111111111111111111111",
+          "name": "system_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "join_code",
+          "type": {
+            "array": [
+              "u8",
+              8
+            ]
+          }
+        },
+        {
+          "name": "bet_amount",
+          "type": "u64"
+        }
+      ],
+      "discriminator": [
+        44,
+        62,
+        102,
+        247,
+        126,
+        208,
+        130,
+        215
+      ],
+      "docs": [
+        "Initialize a new game, executing the SOL transfer via CPI."
+      ],
+      "name": "initialize_game"
+    },
+    {
+      "accounts": [
+        {
+          "name": "game",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  97,
+                  109,
+                  101
+                ]
+              },
+              {
+                "account": "Game",
+                "kind": "account",
+                "path": "game.join_code"
+              }
+            ]
+          },
+          "writable": true
+        },
+        {
+          "name": "player2",
+          "signer": true,
+          "writable": true
+        },
+        {
+          "address": "11111111111111111111111111111111",
+          "name": "system_program"
+        }
+      ],
+      "args": [],
+      "discriminator": [
+        107,
+        112,
+        18,
+        38,
+        56,
+        173,
+        60,
+        128
+      ],
+      "docs": [
+        "Join an existing game, executing the SOL transfer via CPI."
+      ],
+      "name": "join_game"
+    },
+    {
+      "accounts": [
+        {
+          "name": "game",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  97,
+                  109,
+                  101
+                ]
+              },
+              {
+                "account": "Game",
+                "kind": "account",
+                "path": "game.join_code"
+              }
+            ]
+          },
+          "writable": true
+        },
+        {
+          "name": "player",
+          "signer": true,
+          "writable": true
+        },
+        {
+          "address": "11111111111111111111111111111111",
+          "name": "system_program"
+        }
+      ],
+      "args": [],
+      "discriminator": [
+        2,
+        96,
+        183,
+        251,
+        63,
+        208,
+        46,
+        46
+      ],
+      "docs": [
+        "Handle refunds for timed-out games using proper PDA signing"
+      ],
+      "name": "refund"
+    },
+    {
+      "accounts": [
+        {
+          "name": "game",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  97,
+                  109,
+                  101
+                ]
+              },
+              {
+                "account": "Game",
+                "kind": "account",
+                "path": "game.join_code"
+              }
+            ]
+          },
+          "writable": true
+        },
+        {
+          "name": "player",
+          "signer": true
+        },
+        {
+          "address": "11111111111111111111111111111111",
+          "name": "system_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "player_move",
+          "type": {
+            "defined": {
+              "name": "Move"
+            }
+          }
+        },
+        {
+          "name": "salt",
+          "type": "u64"
+        }
+      ],
+      "discriminator": [
+        30,
+        133,
+        198,
+        26,
+        106,
+        44,
+        55,
+        149
+      ],
+      "docs": [
+        "Reveal a move, verifying it against the prior commitment"
+      ],
+      "name": "reveal_move"
+    }
+  ],
+  "metadata": {
+    "name": "sps",
+    "spec": "0.1.0",
+    "version": "0.1.0"
+  },
+  "types": [
+    {
+      "name": "Game",
+      "type": {
+        "fields": [
+          {
+            "name": "player1",
+            "type": "pubkey"
+          },
+          {
+            "name": "player2",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "join_code",
+            "type": {
+              "array": [
+                "u8",
+                8
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "GameStatus"
+              }
+            }
+          },
+          {
+            "name": "bet_amount",
+            "type": "u64"
+          },
+          {
+            "name": "rounds_won_p1",
+            "type": "u8"
+          },
+          {
+            "name": "rounds_won_p2",
+            "type": "u8"
+          },
+          {
+            "name": "total_rounds",
+            "type": "u8"
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          },
+          {
+            "name": "last_activity",
+            "type": "i64"
+          },
+          {
+            "name": "game_bump",
+            "type": "u8"
+          },
+          {
+            "name": "player1_refunded",
+            "type": "bool"
+          },
+          {
+            "name": "player2_refunded",
+            "type": "bool"
+          },
+          {
+            "name": "player1_timeout_refunded",
+            "type": "bool"
+          },
+          {
+            "name": "player2_timeout_refunded",
+            "type": "bool"
+          },
+          {
+            "name": "player1_commit",
+            "type": {
+              "option": {
+                "array": [
+                  "u8",
+                  32
+                ]
+              }
+            }
+          },
+          {
+            "name": "player2_commit",
+            "type": {
+              "option": {
+                "array": [
+                  "u8",
+                  32
+                ]
+              }
+            }
+          },
+          {
+            "name": "player1_move",
+            "type": {
+              "option": {
+                "defined": {
+                  "name": "Move"
+                }
+              }
+            }
+          },
+          {
+            "name": "player2_move",
+            "type": {
+              "option": {
+                "defined": {
+                  "name": "Move"
+                }
+              }
+            }
+          }
+        ],
+        "kind": "struct"
+      }
+    },
+    {
+      "name": "GameCleaned",
+      "type": {
+        "fields": [
+          {
+            "name": "game",
+            "type": "pubkey"
+          }
+        ],
+        "kind": "struct"
+      }
+    },
+    {
+      "name": "GameCompleted",
+      "type": {
+        "fields": [
+          {
+            "name": "game",
+            "type": "pubkey"
+          },
+          {
+            "name": "winner",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "final_score_p1",
+            "type": "u8"
+          },
+          {
+            "name": "final_score_p2",
+            "type": "u8"
+          }
+        ],
+        "kind": "struct"
+      }
+    },
+    {
+      "name": "GameCreated",
+      "type": {
+        "fields": [
+          {
+            "name": "game",
+            "type": "pubkey"
+          },
+          {
+            "name": "player1",
+            "type": "pubkey"
+          },
+          {
+            "name": "join_code",
+            "type": {
+              "array": [
+                "u8",
+                8
+              ]
+            }
+          },
+          {
+            "name": "bet_amount",
+            "type": "u64"
+          }
+        ],
+        "kind": "struct"
+      }
+    },
+    {
+      "name": "GameStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Waiting"
+          },
+          {
+            "fields": [
+              {
+                "name": "round_state",
+                "type": {
+                  "defined": {
+                    "name": "RoundState"
+                  }
+                }
+              }
+            ],
+            "name": "InProgress"
+          },
+          {
+            "name": "Completed"
+          },
+          {
+            "name": "WinningsClaimed"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Move",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Rock"
+          },
+          {
+            "name": "Paper"
+          },
+          {
+            "name": "Scissors"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PlayerJoined",
+      "type": {
+        "fields": [
+          {
+            "name": "game",
+            "type": "pubkey"
+          },
+          {
+            "name": "player2",
+            "type": "pubkey"
+          }
+        ],
+        "kind": "struct"
+      }
+    },
+    {
+      "name": "RefundIssued",
+      "type": {
+        "fields": [
+          {
+            "name": "game",
+            "type": "pubkey"
+          },
+          {
+            "name": "player",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          }
+        ],
+        "kind": "struct"
+      }
+    },
+    {
+      "name": "RoundCompleted",
+      "type": {
+        "fields": [
+          {
+            "name": "game",
+            "type": "pubkey"
+          },
+          {
+            "name": "round",
+            "type": "u8"
+          },
+          {
+            "name": "winner",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "score_p1",
+            "type": "u8"
+          },
+          {
+            "name": "score_p2",
+            "type": "u8"
+          }
+        ],
+        "kind": "struct"
+      }
+    },
+    {
+      "name": "RoundState",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "AwaitingCommits"
+          },
+          {
+            "name": "AwaitingReveals"
+          }
+        ]
+      }
+    },
+    {
+      "name": "WinningsClaimed",
+      "type": {
+        "fields": [
+          {
+            "name": "game",
+            "type": "pubkey"
+          },
+          {
+            "name": "winner",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          }
+        ],
+        "kind": "struct"
+      }
+    }
+  ]
+}
