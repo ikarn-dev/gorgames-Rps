@@ -279,7 +279,7 @@ const GameArena: React.FC = () => {
         } finally {
             setIsCreating(false);
         }
-    }, [publicKey, connected, signTransaction, joinCode, betAmount, connection, clearFeedback, setFeedbackOnce]);
+    }, [publicKey, connected, signTransaction, joinCode, betAmount, connection, clearFeedback, setFeedbackOnce, gameJoinCode]);
 
     const handleJoinGame = useCallback(async () => {
         if (!publicKey || !connected || !disconnect) {
@@ -624,7 +624,7 @@ const GameArena: React.FC = () => {
                 message: '⏰ Opponent is waiting for your move! Make your selection.' 
             });
         }
-    }, [gameState?.player1_commit, gameState?.player2_commit, publicKey, setFeedbackOnce, isAutoRevealing, hasRevealed, gameJoinCode]);
+    }, [gameState, publicKey, setFeedbackOnce, isAutoRevealing, hasRevealed, gameJoinCode]);
 
     // Turn notification system
     useEffect(() => {
@@ -668,7 +668,7 @@ const GameArena: React.FC = () => {
                 setShownRounds(prev => new Set(prev).add(roundNum));
             }
         }
-    }, [gameState?.player1_commit, gameState?.player2_commit, gameState?.player1_move, gameState?.player2_move, publicKey, setFeedbackOnce, isAutoRevealing, hasRevealed, showNextRoundCountdown, gameJoinCode, shownRounds]);
+    }, [gameState, publicKey, setFeedbackOnce, isAutoRevealing, hasRevealed, showNextRoundCountdown, gameJoinCode, shownRounds]);
 
     // Monitor for player joins
     useEffect(() => {
@@ -696,7 +696,7 @@ const GameArena: React.FC = () => {
                 }, 1000); // 1 second delay
             }
         }
-    }, [gameState?.player2, publicKey, setFeedbackOnce, joinFeedbackShown, gameJoinCode, gameState?.status, isJoining]);
+    }, [gameState, publicKey, setFeedbackOnce, joinFeedbackShown, gameJoinCode, isJoining]);
 
     // Reset join feedback flag when game changes
     useEffect(() => {
@@ -986,7 +986,7 @@ const GameArena: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [gameJoinCode, publicKey, connected, disconnect, connection, signTransaction, handleExitRoom]);
+    }, [gameJoinCode, publicKey, connected, disconnect, connection, signTransaction, handleExitRoom, setFeedbackOnce]);
 
     // Cleanup effect to prevent memory leaks
     useEffect(() => {
