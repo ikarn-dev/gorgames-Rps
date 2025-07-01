@@ -7,6 +7,7 @@ import ClaimWinnings from './ClaimWinnings';
 interface GameControlButtonsProps {
     // Game state props
     gameJoinCode: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     gameState: any;
     publicKey: PublicKey | null;
     isLoading: boolean;

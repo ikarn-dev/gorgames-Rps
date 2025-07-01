@@ -25,9 +25,6 @@ declare global {
     }
 }
 
-// Get program ID from environment variables
-const PROGRAM_ID = new PublicKey(process.env.NEXT_PUBLIC_PROGRAM_ID || 'E4DyKAucV3EdC2sQDuFYujDcoro3MhSb4FhQ1ZbFGdSi');
-
 // Main component
 const GameArena: React.FC = () => {
     const { connection } = useConnection();
