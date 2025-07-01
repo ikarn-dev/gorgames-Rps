@@ -13,7 +13,6 @@ interface GameControlButtonsProps {
     isLoading: boolean;
     isCreating: boolean;
     isJoining: boolean;
-    roomReady: boolean;
     walletReady: boolean;
     
     // Button handlers
@@ -21,16 +20,12 @@ interface GameControlButtonsProps {
     handleJoinGame: () => void;
     handleCommitMove: (move: number) => void;
     handleClaimWinnings: () => void;
-    handleExitRoom: () => void;
     handleCopyRoomId: () => void;
     
     // Form state
     joinCode: string;
     setJoinCode: (code: string) => void;
-    betAmount: string;
-    setBetAmount: (amount: string) => void;
     copyStatus: string;
-    roundResults: Array<{ round: number; player1Move: string; player2Move: string; winner: string }>;
 }
 
 export const GameControlButtons: React.FC<GameControlButtonsProps> = ({
@@ -40,18 +35,14 @@ export const GameControlButtons: React.FC<GameControlButtonsProps> = ({
     isLoading,
     isCreating,
     isJoining,
-    roomReady,
     walletReady,
     handleInitializeGame,
     handleJoinGame,
     handleCommitMove,
     handleClaimWinnings,
-    handleExitRoom,
     handleCopyRoomId,
     joinCode,
     setJoinCode,
-    betAmount,
-    setBetAmount,
     copyStatus,
 }) => {
     // Show create/join game controls when no active game
@@ -60,14 +51,11 @@ export const GameControlButtons: React.FC<GameControlButtonsProps> = ({
             <CreateGame
                 joinCode={joinCode}
                 setJoinCode={setJoinCode}
-                betAmount="0.05"
-                setBetAmount={() => {}}
                 isLoading={isLoading}
                 isCreating={isCreating}
                 isJoining={isJoining}
                 handleInitializeGame={handleInitializeGame}
                 handleJoinGame={handleJoinGame}
-                roomReady={roomReady}
                 walletReady={walletReady}
             />
         );

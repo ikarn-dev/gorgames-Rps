@@ -45,14 +45,6 @@ const GameArena: React.FC = () => {
     const [joinFeedbackShown, setJoinFeedbackShown] = useState(false);
     const [roundResults, setRoundResults] = useState<Array<{round: number, player1Move: string, player2Move: string, winner: string}>>([]);
     const [shownFeedbackMessages, setShownFeedbackMessages] = useState<Set<string>>(new Set());
-    const [lastRoundResult, setLastRoundResult] = useState<{
-        round: number;
-        player1Move: string;
-        player2Move: string;
-        winner: string;
-        p1Score: number;
-        p2Score: number;
-    } | null>(null);
     const [copyStatus, setCopyStatus] = useState<string>('Copy');
     const [shownRounds, setShownRounds] = useState<Set<number>>(new Set());
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -60,7 +52,7 @@ const GameArena: React.FC = () => {
     const [roomReady, setRoomReady] = useState(false);
     const [missingGameSince, setMissingGameSince] = useState<number | null>(null);
 
-    const { gameState, loading: gameLoading, commitMove, revealMove, stopPolling } = useOnChainGame(gameJoinCode);
+    const { gameState, loading: gameLoading, commitMove, revealMove } = useOnChainGame(gameJoinCode);
     
     // Check connection status
     useEffect(() => {
@@ -715,7 +707,6 @@ const GameArena: React.FC = () => {
         setHasRevealed(null);
         setIsAutoRevealing(false);
         setShowNextRoundCountdown(false);
-        setLastRoundResult(null);
         setShownRounds(new Set());
     }, [gameJoinCode]);
 
@@ -731,7 +722,6 @@ const GameArena: React.FC = () => {
         ) {
             const timer = setTimeout(() => {
                 setGameJoinCode('');
-                setLastRoundResult(null);
                 setShownFeedbackMessages(new Set());
             }, 3000);
             return () => clearTimeout(timer);
@@ -750,7 +740,6 @@ const GameArena: React.FC = () => {
         setJoinFeedbackShown(false);
         setShowNextRoundCountdown(false);
         setShownFeedbackMessages(new Set());
-        setLastRoundResult(null);
     }, []);
 
     // Helper function to determine round winner
@@ -840,15 +829,6 @@ const GameArena: React.FC = () => {
             };
             
             // Store the last round result for persistent display
-            setLastRoundResult({
-                round: currentRound,
-                player1Move: getMoveName(player1Move),
-                player2Move: getMoveName(player2Move),
-                winner: roundWinner,
-                p1Score: gameState.rounds_won_p1 || 0,
-                p2Score: gameState.rounds_won_p2 || 0
-            });
-            
             setRoundResults(prev => {
                 console.log("Current round results:", prev);
                 // Check if this round result is already in the array
@@ -1172,15 +1152,10 @@ const GameArena: React.FC = () => {
                             handleJoinGame={handleJoinGame}
                             handleCommitMove={handleCommitMove}
                             handleClaimWinnings={handleClaimWinnings}
-                            handleExitRoom={handleExitRoom}
                             handleCopyRoomId={handleCopyRoomId}
                             joinCode={joinCode}
                             setJoinCode={setJoinCode}
-                            betAmount={betAmount}
-                            setBetAmount={setBetAmount}
                             copyStatus={copyStatus}
-                            roundResults={roundResults}
-                            roomReady={roomReady}
                             walletReady={connected && !!publicKey}
                         />
                     </div>

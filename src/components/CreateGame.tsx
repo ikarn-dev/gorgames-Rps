@@ -3,28 +3,22 @@ import React from 'react';
 interface CreateGameProps {
     joinCode: string;
     setJoinCode: (code: string) => void;
-    betAmount: string;
-    setBetAmount: (amount: string) => void;
     isLoading: boolean;
     isCreating: boolean;
     isJoining: boolean;
     handleInitializeGame: () => void;
     handleJoinGame: () => void;
-    roomReady: boolean;
     walletReady: boolean;
 }
 
 const CreateGame: React.FC<CreateGameProps> = ({
     joinCode,
     setJoinCode,
-    betAmount,
-    setBetAmount,
     isLoading,
     isCreating,
     isJoining,
     handleInitializeGame,
     handleJoinGame,
-    roomReady,
     walletReady
 }) => (
     <div className="p-6 rounded-2xl shadow-lg bg-gradient-to-br from-gray-900 to-purple-900 border-2 border-purple-700/40 max-w-md mx-auto">
