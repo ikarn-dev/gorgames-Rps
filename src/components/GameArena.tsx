@@ -55,6 +55,7 @@ const GameArena: React.FC = () => {
     } | null>(null);
     const [copyStatus, setCopyStatus] = useState<string>('Copy');
     const [shownRounds, setShownRounds] = useState<Set<number>>(new Set());
+    const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'warning' | 'info', message: string } | null>(null);
 
     const { gameState, loading: gameLoading, commitMove, revealMove, stopPolling } = useOnChainGame(gameJoinCode);
     
@@ -512,9 +513,7 @@ const GameArena: React.FC = () => {
             
             const bothCommitted = gameState.player1_commit && gameState.player2_commit;
             const movesRevealed = gameState.player1_move && gameState.player2_move;
-            const isPlayer1 = gameState.player1?.equals(publicKey);
-            const isPlayer2 = gameState.player2?.equals(publicKey);
-            const isCurrentPlayer = isPlayer1 || isPlayer2;
+            const isCurrentPlayer = bothCommitted;
             
             console.log("Auto-reveal conditions:", {
                 bothCommitted,
@@ -562,17 +561,15 @@ const GameArena: React.FC = () => {
     useEffect(() => {
         if (!gameState || !publicKey || isAutoRevealing || !gameJoinCode) return;
         
-        const isPlayer1 = gameState.player1?.equals(publicKey);
-        const isPlayer2 = gameState.player2?.equals(publicKey);
-        const isCurrentPlayer = isPlayer1 || isPlayer2;
+        const isCurrentPlayer = gameState.player1?.equals(publicKey) || gameState.player2?.equals(publicKey);
         
         if (!isCurrentPlayer) return;
         
         // Track move commitments
-        const hasCommitted = (isPlayer1 && gameState.player1_commit) || 
-                           (isPlayer2 && gameState.player2_commit);
-        const opponentCommitted = (isPlayer1 && gameState.player2_commit) || 
-                                (isPlayer2 && gameState.player1_commit);
+        const hasCommitted = (gameState.player1?.equals(publicKey) && gameState.player1_commit) || 
+                           (gameState.player2?.equals(publicKey) && gameState.player2_commit);
+        const opponentCommitted = (gameState.player1?.equals(publicKey) && gameState.player2_commit) || 
+                                (gameState.player2?.equals(publicKey) && gameState.player1_commit);
         
         // Show detailed move status (but don't interfere with auto-reveal)
         if (hasCommitted && opponentCommitted && hasRevealed !== publicKey.toBase58()) {
@@ -597,16 +594,14 @@ const GameArena: React.FC = () => {
     useEffect(() => {
         if (!gameState || !publicKey || isAutoRevealing || !gameJoinCode) return;
         
-        const isPlayer1 = gameState.player1?.equals(publicKey);
-        const isPlayer2 = gameState.player2?.equals(publicKey);
-        const isCurrentPlayer = isPlayer1 || isPlayer2;
+        const isCurrentPlayer = gameState.player1?.equals(publicKey) || gameState.player2?.equals(publicKey);
         
         if (!isCurrentPlayer) return;
         
-        const hasCommitted = (isPlayer1 && gameState.player1_commit) || 
-                           (isPlayer2 && gameState.player2_commit);
-        const opponentCommitted = (isPlayer1 && gameState.player2_commit) || 
-                                (isPlayer2 && gameState.player1_commit);
+        const hasCommitted = (gameState.player1?.equals(publicKey) && gameState.player1_commit) || 
+                           (gameState.player2?.equals(publicKey) && gameState.player2_commit);
+        const opponentCommitted = (gameState.player1?.equals(publicKey) && gameState.player2_commit) || 
+                                (gameState.player2?.equals(publicKey) && gameState.player1_commit);
         const bothCommitted = gameState.player1_commit && gameState.player2_commit;
         const movesRevealed = gameState.player1_move && gameState.player2_move;
         
@@ -638,16 +633,14 @@ const GameArena: React.FC = () => {
     useEffect(() => {
         if (!gameState || !publicKey || !gameJoinCode) return;
         
-        const isPlayer1 = gameState.player1?.equals(publicKey);
-        const isPlayer2 = gameState.player2?.equals(publicKey);
-        const isCurrentPlayer = isPlayer1 || isPlayer2;
+        const isCurrentPlayer = gameState.player1?.equals(publicKey) || gameState.player2?.equals(publicKey);
         
         if (!isCurrentPlayer) return;
         
         // Check if someone just joined (we have both players now) and feedback hasn't been shown yet
         if (gameState.player1 && gameState.player2 && !joinFeedbackShown) {
-            const opponentAddress = isPlayer1 ? gameState.player2 : gameState.player1;
-            const opponentName = isPlayer1 ? 'Player 2' : 'Player 1';
+            const opponentAddress = gameState.player1?.equals(publicKey) ? gameState.player2 : gameState.player1;
+            const opponentName = gameState.player1?.equals(publicKey) ? 'Player 2' : 'Player 1';
             
             // Only show notification if we're actively in the game room and the game is in progress
             // Also, don't show the notification to the player who just joined (they already know they joined)
@@ -656,7 +649,7 @@ const GameArena: React.FC = () => {
                 setTimeout(() => {
                     setFeedbackOnce({ 
                         type: 'success', 
-                        message: `🎉 ${opponentName} joined the game! (${opponentAddress.toBase58().slice(0, 8)}...)` 
+                        message: `🎉 ${opponentName} joined the game! (${opponentAddress?.toBase58().slice(0, 8)}...)` 
                     });
                     setJoinFeedbackShown(true); // Mark that join feedback has been shown
                 }, 1000); // 1 second delay
@@ -668,8 +661,6 @@ const GameArena: React.FC = () => {
     useEffect(() => {
         setJoinFeedbackShown(false);
         setRoundResults([]);
-        setFeedback(null); // Clear feedback when game changes
-        setShownFeedbackMessages(new Set()); // Reset feedback tracking
         setCommittedSalt(null);
         setCommittedMove(null);
         setHasRevealed(null);
@@ -686,7 +677,6 @@ const GameArena: React.FC = () => {
             const timer = setTimeout(() => {
                 setGameJoinCode('');
                 setLastRoundResult(null);
-                setFeedback(null); // Clear feedback when game is closed
                 setShownFeedbackMessages(new Set()); // Reset feedback tracking
             }, 3000); // Give user 3 seconds to see the completion message
             
@@ -738,24 +728,6 @@ const GameArena: React.FC = () => {
         }
     };
 
-    // Timer for next round countdown
-    useEffect(() => {
-        if (showNextRoundCountdown && nextRoundTimer !== null) {
-            const interval = setInterval(() => {
-                setNextRoundTimer(prev => {
-                    if (prev === null || prev <= 1) {
-                        setShowNextRoundCountdown(false);
-                        setNextRoundTimer(null);
-                        return null;
-                    }
-                    return prev - 1;
-                });
-            }, 1000);
-            
-            return () => clearInterval(interval);
-        }
-    }, [showNextRoundCountdown, nextRoundTimer]);
-
     // Handle round completion and start next round timer
     useEffect(() => {
         if (gameState && gameState.player1_move && gameState.player2_move) {
@@ -767,14 +739,6 @@ const GameArena: React.FC = () => {
                 // Only start timer if not already showing countdown
                 if (!showNextRoundCountdown) {
                     setShowNextRoundCountdown(true);
-                    setNextRoundTimer(3);
-                    
-                    // Clear local state after showing results - increased delay to 5 seconds
-                    setTimeout(() => {
-                        setCommittedSalt(null);
-                        setCommittedMove(null);
-                        setHasRevealed(null);
-                    }, 5000);
                 }
             }
         }
@@ -830,11 +794,6 @@ const GameArena: React.FC = () => {
                 p1Score: gameState.rounds_won_p1 || 0,
                 p2Score: gameState.rounds_won_p2 || 0
             });
-            
-            // Clear the last round result after a delay to allow UI to show it
-            setTimeout(() => {
-                setLastRoundResult(null);
-            }, 3000); // Show for 3 seconds
             
             setRoundResults(prev => {
                 console.log("Current round results:", prev);
@@ -1214,8 +1173,6 @@ const GameArena: React.FC = () => {
                                     <GameStatus status={gameState?.status} />
                                     <div className="mt-4">
                              <TurnIndicator 
-                                isPlayer1={!!gameState?.player1}
-                                isPlayer2={!!gameState?.player2}
                                 hasCommitted={(() => {
                                     const isPlayer1 = gameState?.player1?.toString() === publicKey?.toString();
                                     const isPlayer2 = gameState?.player2?.toString() === publicKey?.toString();
@@ -1280,7 +1237,6 @@ const GameArena: React.FC = () => {
                                 <GameCompletion
                                     gameJoinCode={gameJoinCode}
                                     gameState={gameState}
-                                    gameError={null}
                                     betAmount={gameState.bet_amount ? gameState.bet_amount.toNumber() / 1e9 : 0.05}
                                     publicKey={publicKey}
                                     handleClaimWinnings={handleClaimWinnings}

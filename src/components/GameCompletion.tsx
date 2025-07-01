@@ -2,10 +2,8 @@ import React from 'react';
 
 interface GameCompletionProps {
     gameJoinCode: string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     gameState: any;
     betAmount: number;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     publicKey?: any;
     handleClaimWinnings?: () => void;
     winningsClaimed?: boolean;
@@ -13,10 +11,8 @@ interface GameCompletionProps {
 
 export const GameCompletion: React.FC<GameCompletionProps> = ({
     gameJoinCode,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     gameState,
     betAmount,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     publicKey,
     handleClaimWinnings,
     winningsClaimed

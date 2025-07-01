@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Image from 'next/image';
 
 interface CommitMoveProps {
     isLoading: boolean;
@@ -97,9 +98,11 @@ const CommitMove: React.FC<CommitMoveProps> = ({ isLoading, handleCommitMove }) 
                                 `} />
                                 
                                 {/* Image */}
-                                <img
+                                <Image
                                     src={move.src}
                                     alt={move.name}
+                                    width={28}
+                                    height={28}
                                     className="w-7 h-7 object-contain select-none pointer-events-none relative z-10"
                                     draggable={false}
                                 />
