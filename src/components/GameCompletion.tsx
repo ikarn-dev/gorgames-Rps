@@ -4,7 +4,6 @@ interface GameCompletionProps {
     gameJoinCode: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     gameState: any;
-    gameError: string | null;
     betAmount: number;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     publicKey?: any;
@@ -16,7 +15,6 @@ export const GameCompletion: React.FC<GameCompletionProps> = ({
     gameJoinCode,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     gameState,
-    gameError,
     betAmount,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     publicKey,

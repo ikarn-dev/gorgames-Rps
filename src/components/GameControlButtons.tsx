@@ -42,14 +42,12 @@ export const GameControlButtons: React.FC<GameControlButtonsProps> = ({
     handleJoinGame,
     handleCommitMove,
     handleClaimWinnings,
-    handleExitRoom,
     handleCopyRoomId,
     joinCode,
     setJoinCode,
     betAmount,
     setBetAmount,
     copyStatus,
-    roundResults
 }) => {
     // Show create/join game controls when no active game
     if (!gameJoinCode || !gameState) {

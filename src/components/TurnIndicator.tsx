@@ -1,8 +1,6 @@
 import React from 'react';
 
 interface TurnIndicatorProps {
-    isPlayer1: boolean;
-    isPlayer2: boolean;
     hasCommitted: boolean;
     opponentCommitted: boolean;
     bothCommitted: boolean;
@@ -14,8 +12,6 @@ interface TurnIndicatorProps {
 }
 
 const TurnIndicator: React.FC<TurnIndicatorProps> = ({
-    isPlayer1,
-    isPlayer2,
     hasCommitted,
     opponentCommitted,
     bothCommitted,

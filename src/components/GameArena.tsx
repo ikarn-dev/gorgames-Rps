@@ -33,22 +33,17 @@ const GameArena: React.FC = () => {
 
     const [joinCode, setJoinCode] = useState('');
     const [betAmount, setBetAmount] = useState('0.05');
-    const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'warning' | 'info', message: string } | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
     const [isJoining, setIsJoining] = useState(false);
-    const [connectionStatus, setConnectionStatus] = useState<string>('Checking...');
     const [gameJoinCode, setGameJoinCode] = useState<string>('');
     const [committedSalt, setCommittedSalt] = useState<BN | null>(null);
     const [committedMove, setCommittedMove] = useState<number | null>(null);
     const [isAutoRevealing, setIsAutoRevealing] = useState(false);
     const [hasRevealed, setHasRevealed] = useState<string | null>(null);
-    const [nextRoundTimer, setNextRoundTimer] = useState<number | null>(null);
     const [showNextRoundCountdown, setShowNextRoundCountdown] = useState(false);
     const [joinFeedbackShown, setJoinFeedbackShown] = useState(false);
     const [roundResults, setRoundResults] = useState<Array<{round: number, player1Move: string, player2Move: string, winner: string}>>([]);
-    const [finalWinner, setFinalWinner] = useState<string | null>(null);
-    const [timeoutTimer, setTimeoutTimer] = useState<string>('');
     const [shownFeedbackMessages, setShownFeedbackMessages] = useState<Set<string>>(new Set());
     const [lastRoundResult, setLastRoundResult] = useState<{
         round: number;
@@ -68,9 +63,7 @@ const GameArena: React.FC = () => {
         const checkConnection = async () => {
             try {
                 const slot = await connection.getSlot();
-                setConnectionStatus(`Connected (Slot: ${slot})`);
             } catch (error) {
-                setConnectionStatus('Connection failed');
                 console.error('Connection error:', error);
             }
         };
@@ -675,7 +668,6 @@ const GameArena: React.FC = () => {
     useEffect(() => {
         setJoinFeedbackShown(false);
         setRoundResults([]);
-        setFinalWinner(null);
         setFeedback(null); // Clear feedback when game changes
         setShownFeedbackMessages(new Set()); // Reset feedback tracking
         setCommittedSalt(null);
@@ -683,8 +675,6 @@ const GameArena: React.FC = () => {
         setHasRevealed(null);
         setIsAutoRevealing(false);
         setShowNextRoundCountdown(false);
-        setNextRoundTimer(null);
-        setTimeoutTimer('');
         setLastRoundResult(null);
         setShownRounds(new Set());
     }, [gameJoinCode]);
@@ -709,66 +699,15 @@ const GameArena: React.FC = () => {
         setGameJoinCode('');
         setJoinCode('');
         setRoundResults([]);
-        setFinalWinner(null);
         setCommittedSalt(null);
         setCommittedMove(null);
         setHasRevealed(null);
         setIsAutoRevealing(false);
         setJoinFeedbackShown(false);
         setShowNextRoundCountdown(false);
-        setNextRoundTimer(null);
-        setTimeoutTimer('');
         setShownFeedbackMessages(new Set());
         setLastRoundResult(null);
     }, []);
-
-    // Start timer when both players join and game is in progress
-
-
-    // Update timeout timer every second (10 minutes countdown, synchronized to on-chain start time)
-    useEffect(() => {
-        if (!gameState || !gameState.player1 || !gameState.player2) {
-            setTimeoutTimer('');
-            return;
-        }
-
-        const updateTimer = () => {
-            // Get the created_at timestamp, ensuring it's a number
-            const createdAt = gameState.created_at?.toNumber?.() || Number(gameState.created_at);
-            
-            if (!createdAt || isNaN(createdAt)) {
-                console.error('Invalid created_at timestamp:', gameState.created_at);
-                setTimeoutTimer('--:--');
-                return;
-            }
-
-            const onChainStartTime = createdAt * 1000; // convert to milliseconds
-            const now = Date.now();
-            const elapsed = Math.floor((now - onChainStartTime) / 1000);
-            const timeRemaining = 600 - elapsed; // 10 minutes
-
-            if (timeRemaining <= 0) {
-                setTimeoutTimer('⚠️ Game has timed out!');
-                setTimeout(() => handleExitRoom(), 2000); // Terminate room after 2 seconds
-                return;
-            }
-
-            const minutes = Math.floor(timeRemaining / 60);
-            const seconds = timeRemaining % 60;
-            const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-            
-            if (timeRemaining < 60) {
-                setTimeoutTimer(`⚠️ ${timeString}`);
-            } else {
-                setTimeoutTimer(timeString);
-            }
-        };
-
-        // Start timer immediately when both players are present
-        updateTimer();
-        const interval = setInterval(updateTimer, 1000);
-        return () => clearInterval(interval);
-    }, [gameState?.player1, gameState?.player2, gameState?.created_at, handleExitRoom]);
 
     // Helper function to determine round winner
     const getRoundWinner = (move1: number, move2: number): string => {
@@ -909,20 +848,6 @@ const GameArena: React.FC = () => {
                 }
                 return prev;
             });
-            
-            // Calculate final winner when game is completed
-            if (gameState.status?.completed) {
-                const p1Wins = gameState.rounds_won_p1 || 0;
-                const p2Wins = gameState.rounds_won_p2 || 0;
-                
-                if (p1Wins > p2Wins) {
-                    setFinalWinner('Player 1');
-                } else if (p2Wins > p1Wins) {
-                    setFinalWinner('Player 2');
-                } else {
-                    setFinalWinner('Tie');
-                }
-            }
         }
     }, [gameState?.player1_move, gameState?.player2_move, gameState?.total_rounds, gameState?.rounds_won_p1, gameState?.rounds_won_p2, gameState?.status]);
 
@@ -1078,14 +1003,12 @@ const GameArena: React.FC = () => {
         return () => {
             // Clear any pending timeouts when component unmounts
             setShowNextRoundCountdown(false);
-            setNextRoundTimer(null);
             setCommittedSalt(null);
             setCommittedMove(null);
             setHasRevealed(null);
             setIsAutoRevealing(false);
             setJoinFeedbackShown(false);
             setRoundResults([]);
-            setFinalWinner(null);
         };
     }, []);
 
@@ -1117,10 +1040,7 @@ const GameArena: React.FC = () => {
         }
     }, [gameState, gameJoinCode]);
 
-
-
     const showTimerWarning = !!(gameState && gameState.player1 && gameState.player2 && gameState.status?.inProgress);
-    const timerWarning = showTimerWarning ? "You may lose your bet if you don't play before the timer ends" : undefined;
 
     const handleDisconnect = async () => {
         try {
