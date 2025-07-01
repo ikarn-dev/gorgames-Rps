@@ -15,6 +15,7 @@ import TurnIndicator from './TurnIndicator';
 import RoundProgress from './RoundProgress';
 import RoundComplete from './RoundComplete';
 import CommitMove from './CommitMove';
+import { Feedback } from './Feedback';
 
 // Add Phantom wallet type to window object
 declare global {
@@ -55,6 +56,7 @@ const GameArena: React.FC = () => {
     } | null>(null);
     const [copyStatus, setCopyStatus] = useState<string>('Copy');
     const [shownRounds, setShownRounds] = useState<Set<number>>(new Set());
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'warning' | 'info', message: string } | null>(null);
 
     const { gameState, loading: gameLoading, commitMove, revealMove, stopPolling } = useOnChainGame(gameJoinCode);
@@ -63,6 +65,7 @@ const GameArena: React.FC = () => {
     useEffect(() => {
         const checkConnection = async () => {
             try {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 const slot = await connection.getSlot();
             } catch (error) {
                 console.error('Connection error:', error);
@@ -999,6 +1002,7 @@ const GameArena: React.FC = () => {
         }
     }, [gameState, gameJoinCode]);
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const showTimerWarning = !!(gameState && gameState.player1 && gameState.player2 && gameState.status?.inProgress);
 
     const handleDisconnect = async () => {
@@ -1296,6 +1300,9 @@ const GameArena: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            {/* Feedback component */}
+            <Feedback feedback={feedback} onClose={() => setFeedback(null)} />
         </div>
     );
 };
