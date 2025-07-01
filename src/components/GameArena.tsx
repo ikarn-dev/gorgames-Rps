@@ -50,6 +50,7 @@ const GameArena: React.FC = () => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'warning' | 'info', message: string } | null>(null);
     const [roomReady, setRoomReady] = useState(false);
+    console.debug('roomReady state:', roomReady); // eslint-disable-line
     const [missingGameSince, setMissingGameSince] = useState<number | null>(null);
 
     const { gameState, loading: gameLoading, commitMove, revealMove } = useOnChainGame(gameJoinCode);
@@ -220,7 +221,7 @@ const GameArena: React.FC = () => {
                         foundRoom = true;
                         break;
                     }
-                } catch (e) {
+                } catch (_e) {
                     // Ignore fetch errors, just keep polling
                 }
                 await new Promise(res => setTimeout(res, 1000));
@@ -744,16 +745,6 @@ const GameArena: React.FC = () => {
         if (move1 === move2) return 'Tie';
         if ((move1 + 1) % 3 === move2) return 'Player 2';
         return 'Player 1';
-    };
-
-    // Helper function to get move name
-    const getMoveName = (move: number): string => {
-        switch (move) {
-            case 0: return 'Rock';
-            case 1: return 'Paper';
-            case 2: return 'Scissors';
-            default: return 'Unknown';
-        }
     };
 
     const handleCopyRoomId = async () => {

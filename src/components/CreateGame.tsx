@@ -17,14 +17,11 @@ interface CreateGameProps {
 const CreateGame: React.FC<CreateGameProps> = ({
     joinCode,
     setJoinCode,
-    betAmount,
-    setBetAmount,
     isLoading,
     isCreating,
     isJoining,
     handleInitializeGame,
     handleJoinGame,
-    roomReady,
     walletReady
 }) => (
     <div className="p-6 rounded-2xl shadow-lg bg-gradient-to-br from-gray-900 to-purple-900 border-2 border-purple-700/40 max-w-md mx-auto">

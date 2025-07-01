@@ -41,7 +41,6 @@ export const GameControlButtons: React.FC<GameControlButtonsProps> = ({
     handleJoinGame,
     handleCommitMove,
     handleClaimWinnings,
-    handleExitRoom,
     handleCopyRoomId,
     joinCode,
     setJoinCode,
