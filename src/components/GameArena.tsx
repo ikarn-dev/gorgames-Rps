@@ -58,6 +58,7 @@ const GameArena: React.FC = () => {
     const [shownRounds, setShownRounds] = useState<Set<number>>(new Set());
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'warning' | 'info', message: string } | null>(null);
+    const [roomReady, setRoomReady] = useState(false);
 
     const { gameState, loading: gameLoading, commitMove, revealMove, stopPolling } = useOnChainGame(gameJoinCode);
     
@@ -209,6 +210,32 @@ const GameArena: React.FC = () => {
             setGameJoinCode(code);
             setJoinCode(''); // Clear input after success
             clearFeedback();
+
+            // --- POLL FOR ROOM READINESS ---
+            setRoomReady(false);
+            let pollTries = 0;
+            const maxPollTries = 10;
+            while (pollTries < maxPollTries) {
+                try {
+                    const program = await getProgramFromWallet({ publicKey, disconnect, signTransaction });
+                    const joinCodeBytes = Array.from(new TextEncoder().encode(code.padEnd(8, '\0')).slice(0, 8));
+                    const [gamePda] = await PublicKey.findProgramAddress(
+                        [Buffer.from("game"), Buffer.from(joinCodeBytes)],
+                        program.programId
+                    );
+                    const gameAccount = await program.account.game.fetch(gamePda);
+                    if (gameAccount && gameAccount.status && gameAccount.status.waiting !== undefined) {
+                        setRoomReady(true);
+                        break;
+                    }
+                } catch (e) {
+                    // Ignore fetch errors, just keep polling
+                }
+                await new Promise(res => setTimeout(res, 1000));
+                pollTries++;
+            }
+            if (!roomReady) setFeedbackOnce({ type: 'warning', message: 'Room may not be ready yet. Please wait a moment before joining.' });
+            // --- END POLL ---
 
         } catch (error: unknown) {
             console.error("Failed to initialize game:", error);
@@ -1136,6 +1163,7 @@ const GameArena: React.FC = () => {
                             setBetAmount={setBetAmount}
                             copyStatus={copyStatus}
                             roundResults={roundResults}
+                            roomReady={roomReady}
                         />
                     </div>
                 ) : (

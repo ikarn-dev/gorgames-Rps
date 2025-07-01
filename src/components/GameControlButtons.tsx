@@ -13,6 +13,7 @@ interface GameControlButtonsProps {
     isLoading: boolean;
     isCreating: boolean;
     isJoining: boolean;
+    roomReady: boolean;
     
     // Button handlers
     handleInitializeGame: () => void;
@@ -38,6 +39,7 @@ export const GameControlButtons: React.FC<GameControlButtonsProps> = ({
     isLoading,
     isCreating,
     isJoining,
+    roomReady,
     handleInitializeGame,
     handleJoinGame,
     handleCommitMove,
@@ -62,6 +64,7 @@ export const GameControlButtons: React.FC<GameControlButtonsProps> = ({
                 isJoining={isJoining}
                 handleInitializeGame={handleInitializeGame}
                 handleJoinGame={handleJoinGame}
+                roomReady={roomReady}
             />
         );
     }

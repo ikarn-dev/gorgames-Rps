@@ -10,6 +10,7 @@ interface CreateGameProps {
     isJoining: boolean;
     handleInitializeGame: () => void;
     handleJoinGame: () => void;
+    roomReady: boolean;
 }
 
 const CreateGame: React.FC<CreateGameProps> = ({
@@ -21,7 +22,8 @@ const CreateGame: React.FC<CreateGameProps> = ({
     isCreating,
     isJoining,
     handleInitializeGame,
-    handleJoinGame
+    handleJoinGame,
+    roomReady
 }) => (
     <div className="p-4 border border-gray-600 rounded-lg">
         <h2 className="text-xl font-semibold mb-4 text-gray-200">Create or Join Game</h2>
@@ -58,7 +60,7 @@ const CreateGame: React.FC<CreateGameProps> = ({
                 </button>
                 <button
                     onClick={handleJoinGame}
-                    disabled={isCreating || isJoining}
+                    disabled={isCreating || isJoining || !roomReady}
                     className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 rounded-md font-bold disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors"
                 >
                     {isJoining ? 'Joining...' : 'Join Game'}
