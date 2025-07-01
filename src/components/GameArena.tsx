@@ -610,6 +610,11 @@ const GameArena: React.FC = () => {
         const bothCommitted = gameState.player1_commit && gameState.player2_commit;
         const movesRevealed = gameState.player1_move && gameState.player2_move;
         
+        // Show feedback when both players have committed but not yet revealed
+        if (bothCommitted && !movesRevealed) {
+            setFeedbackOnce({ type: 'info', message: 'Both players have committed! Waiting for reveal...' });
+        }
+        
         // Your turn notification (only if moves are not revealed yet)
         if (!hasCommitted && opponentCommitted && !movesRevealed && hasRevealed !== publicKey.toBase58() && !showNextRoundCountdown) {
             setFeedbackOnce({ 
