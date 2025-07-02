@@ -8,6 +8,7 @@ import "@solana/wallet-adapter-react-ui/styles.css";
 import { Feedback } from "./Feedback";
 
 // Custom hook for wallet signing
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function useWalletSigner(setFeedback: (f: any) => void) {
   const { publicKey, signMessage, connected } = useWallet();
 
@@ -22,8 +23,12 @@ function useWalletSigner(setFeedback: (f: any) => void) {
           // Store authentication state
           localStorage.setItem('walletAuthenticated', 'true');
           localStorage.setItem('walletPublicKey', publicKey.toBase58());
-        } catch (error) {
-          setFeedback({ type: 'error', message: 'Failed to sign authentication message.' });
+        } catch (err: any) {
+          if (err && (err.code === 4001 || err.message?.toLowerCase().includes('user rejected'))) {
+            setFeedback({ type: 'warning', message: 'Wallet connection request was rejected.' });
+          } else {
+            setFeedback({ type: 'error', message: 'Failed to sign authentication message.' });
+          }
           localStorage.removeItem('walletAuthenticated');
         }
       }
