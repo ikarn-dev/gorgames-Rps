@@ -11,15 +11,15 @@ export const Feedback: React.FC<FeedbackProps> = ({ feedback, onClose }) => {
     const getFeedbackStyles = (type: string) => {
         switch (type) {
             case 'success':
-                return 'bg-green-900 text-green-200 border-green-700';
-            case 'error':
-                return 'bg-red-900 text-red-200 border-red-700';
-            case 'warning':
-                return 'bg-yellow-900 text-yellow-200 border-yellow-700';
+                return 'bg-cyan-950 text-cyan-200 border-cyan-400';
             case 'info':
-                return 'bg-blue-900 text-blue-200 border-blue-700';
+                return 'bg-cyan-950 text-cyan-200 border-cyan-400';
+            case 'error':
+                return 'bg-pink-950 text-pink-200 border-pink-400';
+            case 'warning':
+                return 'bg-yellow-900 text-yellow-200 border-yellow-400';
             default:
-                return 'bg-gray-900 text-gray-200 border-gray-700';
+                return 'bg-neutral-900 text-white border-gray-700';
         }
     };
 

@@ -119,12 +119,10 @@ export async function getProgramFromWallet(wallet: any): Promise<SpsProgram> {
   const programId = new PublicKey(SPS_PROGRAM_ID);
   
   try {
-    // Try to use deployed IDL first, fall back to local
-    const idlToUse = await getIdl(programId, provider);
-    
+    await getIdl(programId, provider);
     return await Program.at(programId, provider) as SpsProgram;
-  } catch (error) {
-    throw new Error(`Failed to initialize program: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  } catch {
+    throw new Error(`Failed to initialize program: Unknown error`);
   }
 }
 
@@ -135,7 +133,7 @@ async function getIdl(programId: PublicKey, provider: AnchorProvider): Promise<I
     if (deployedIdl) {
       return ensureGameAccountType(deployedIdl);
     }
-  } catch (error) {
+  } catch {
   }
   
   return spsIdl as Idl;

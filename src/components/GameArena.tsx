@@ -209,7 +209,7 @@ const GameArena: React.FC = () => {
                         break;
                     }
                 } catch (_e) {
-                    // Ignore fetch errors, just keep polling
+                    console.error(_e);
                 }
                 await new Promise(res => setTimeout(res, 1000));
                 pollTries++;
