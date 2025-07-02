@@ -71,8 +71,21 @@ const CreateGame: React.FC<CreateGameProps> = ({
                         maxLength={8}
                     />
                     <div className="flex items-center gap-2 mt-1">
-                        <span className="text-gray-400 text-sm">Bet Amount:</span>
-                        <span className="bg-purple-700 text-white px-3 py-1 rounded-lg font-bold text-lg shadow border border-purple-500/40 tracking-wider">0.05 GOR</span>
+                        <span className="text-cyan-300 text-xs sm:text-sm font-bold tracking-wider" style={{ fontFamily: 'var(--font-orbitron), \'Courier New\', monospace' }}>Bet Amount:</span>
+                        <span className="bg-purple-700 text-white px-3 py-1 rounded-lg font-extrabold text-base sm:text-lg shadow border border-purple-500/40 tracking-widest" style={{ fontFamily: 'var(--font-orbitron), \'Courier New\', monospace' }}>
+                          0.05 GOR
+                        </span>
+                        <div className="relative group flex items-center">
+                          <button type="button" tabIndex={0} aria-label="Bet info" className="ml-1 text-xs text-cyan-300 hover:text-cyan-400 focus:outline-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" />
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-4m0-4h.01" />
+                            </svg>
+                          </button>
+                          <div className="absolute left-1/2 top-full mt-2 -translate-x-1/2 z-50 w-52 px-3 py-2 rounded-lg bg-neutral-900 text-cyan-200 text-xs shadow-lg border border-cyan-400 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto group-focus-within:pointer-events-auto transition-opacity duration-200 whitespace-normal" style={{ fontFamily: 'var(--font-orbitron), \'Courier New\', monospace' }}>
+                            Custom bet amounts and higher stakes coming soon!
+                          </div>
+                        </div>
                     </div>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3 mt-2">
