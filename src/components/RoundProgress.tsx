@@ -14,7 +14,7 @@ const RoundProgress: React.FC<RoundProgressProps> = ({ round, completed, winning
     const currentRound = completed || winningsClaimed ? round : round + 1;
     const progressPercent = Math.min((currentRound / totalRounds) * 100, 100);
     return (
-        <div className="bg-gradient-to-br from-gray-800 to-purple-900 p-5 rounded-2xl shadow border-2 border-purple-700/30">
+        <div className="p-4 sm:p-6 rounded-xl shadow-lg border border-purple-700/40 max-w-xs mx-auto bg-gradient-to-br from-gray-800 to-purple-900 min-h-[210px] md:min-h-[210px]">
             <div className="flex items-center justify-between mb-2">
                 <span className="text-lg font-bold text-purple-300">🏆 Round Progress
                 </span>

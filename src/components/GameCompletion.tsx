@@ -9,6 +9,7 @@ interface GameCompletionProps {
     publicKey?: any;
     handleClaimWinnings?: () => void;
     winningsClaimed?: boolean;
+    handleExitRoom?: () => void;
 }
 
 export const GameCompletion: React.FC<GameCompletionProps> = ({
@@ -19,7 +20,8 @@ export const GameCompletion: React.FC<GameCompletionProps> = ({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     publicKey,
     handleClaimWinnings,
-    winningsClaimed
+    winningsClaimed,
+    handleExitRoom
 }) => {
     // Only show completion message when game is actually completed and closed
     if (!gameJoinCode || !gameState || !gameState.status?.completed) return null;
@@ -30,44 +32,54 @@ export const GameCompletion: React.FC<GameCompletionProps> = ({
     const isPlayer1 = publicKey && gameState.player1 && gameState.player1.toString() === publicKey.toString();
     const isPlayer2 = publicKey && gameState.player2 && gameState.player2.toString() === publicKey.toString();
     const isWinner = (!isTie && ((isPlayer1 && p1Wins > p2Wins) || (isPlayer2 && p2Wins > p1Wins)));
+    const isLoser = !isTie && !isWinner;
 
     return (
-        <div className="p-6 rounded-2xl shadow-lg bg-gradient-to-br from-gray-900 to-purple-900 border-2 border-purple-700/40 text-center">
+        <div className="p-4 sm:p-6 rounded-xl shadow-lg border border-purple-700/40 text-center max-w-xs mx-auto">
             <div className="flex flex-col items-center gap-2">
-                <span className="text-4xl">3c6</span>
-                <h2 className="text-2xl font-bold text-purple-300 mb-2">Game Completed</h2>
+                {(!isLoser || isTie) && <span className="text-3xl sm:text-4xl">🏆</span>}
+                <h2 className="text-lg sm:text-2xl font-bold text-purple-300 mb-2">Game Completed</h2>
                 {isTie ? (
-                    <div className="text-yellow-300 font-semibold text-lg flex flex-col items-center">
-                        <span className="text-3xl mb-1">91d</span>
-                        Match ended in a <span className="underline">tie</span>!<br />
-                        <span className="text-sm mt-1">Refund: <span className="font-mono">{betAmount} GOR</span></span>
+                    <div className="text-yellow-300 font-semibold text-base sm:text-lg flex flex-col items-center">
+                        <span className="text-2xl sm:text-3xl mb-1">🤝</span>
+                        It's a <span className="underline">tie</span>!<br />
+                        <span className="text-xs sm:text-sm mt-1">Refund: <span className="font-mono">{betAmount} GOR</span></span>
                     </div>
                 ) : isWinner && !winningsClaimed ? (
                     <>
-                        <div className="text-green-400 font-bold text-lg flex flex-col items-center">
-                            <span className="text-3xl mb-1">3c6</span>
+                        <div className="text-green-400 font-bold text-base sm:text-lg flex flex-col items-center">
+                            <span className="text-2xl sm:text-3xl mb-1">🎉</span>
                             Congratulations! You won!
                         </div>
                         <button
-                            className="mt-4 px-6 py-2 bg-yellow-400 hover:bg-yellow-500 text-black font-bold rounded-lg shadow transition-colors text-lg"
+                            className="mt-4 px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-black font-bold rounded-lg shadow transition-colors text-base sm:text-lg"
                             onClick={handleClaimWinnings}
                         >
                             Claim Reward
                         </button>
-                        <div className="text-sm text-gray-300 mt-2">Prize: <span className="font-mono">{betAmount * 2} GOR</span></div>
+                        <div className="text-xs sm:text-sm text-gray-300 mt-2">Prize: <span className="font-mono">{betAmount * 2} GOR</span></div>
                     </>
                 ) : isWinner && winningsClaimed ? (
-                    <div className="text-green-300 font-semibold text-lg flex flex-col items-center">
-                        <span className="text-3xl mb-1">389</span>
+                    <div className="text-green-300 font-semibold text-base sm:text-lg flex flex-col items-center">
+                        <span className="text-2xl sm:text-3xl mb-1">💰</span>
                         Winnings claimed!
                     </div>
                 ) : (
-                    <div className="text-red-300 font-semibold text-lg flex flex-col items-center">
-                        <span className="text-3xl mb-1">622</span>
-                        Better luck next time!
-                    </div>
+                    <>
+                        <div className="text-red-300 font-semibold text-base sm:text-lg flex flex-col items-center">
+                            <span className="text-2xl sm:text-3xl mb-1">😔</span>
+                            You lost this match.<br />
+                            <span className="text-xs sm:text-sm mt-1">Better luck next time!</span>
+                        </div>
+                        <button
+                            className="mt-4 px-4 py-2 bg-gray-700 hover:bg-gray-800 text-white font-bold rounded-lg shadow border border-purple-400 transition-colors text-base sm:text-lg"
+                            onClick={handleExitRoom}
+                        >
+                            Leave Room
+                        </button>
+                        <div className="mt-2 text-gray-400 text-xs sm:text-sm">You can leave the room now and create or join a new room.</div>
+                    </>
                 )}
-                <div className="mt-4 text-gray-400 text-sm">You can create a new game or join another one.</div>
             </div>
         </div>
     );

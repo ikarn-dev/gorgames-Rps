@@ -11,17 +11,17 @@ interface GameSummaryProps {
 
 const GameSummary: React.FC<GameSummaryProps> = ({ completed, p1Wins, p2Wins, betAmount, totalWinnings, isTie }) => (
     completed ? (
-        <div className="bg-gray-700 p-3 rounded">
+        <div className="bg-gradient-to-br from-purple-800 to-[#181c2f] p-2 rounded-md text-xs shadow border border-purple-700/40">
             <p className="font-semibold">Game Complete!</p>
             <p className="text-gray-300">
                 {p1Wins > p2Wins ? 'Player 1 wins the game!' : 
                  p2Wins > p1Wins ? 'Player 2 wins the game!' : 
                  'Game tied'}
             </p>
-            <p className="text-sm text-gray-400">
+            <p className="text-[10px] text-gray-400">
                 Bet amount: {betAmount} GOR
             </p>
-            <p className="text-sm text-yellow-400 font-semibold">
+            <p className="text-[11px] text-yellow-400 font-semibold">
                 {isTie ? 'Refund Amount' : '🏆 Total Winnings'}: {totalWinnings} GOR
             </p>
         </div>

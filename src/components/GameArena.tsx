@@ -16,6 +16,8 @@ import TurnIndicator from './TurnIndicator';
 import RoundProgress from './RoundProgress';
 import CommitMove from './CommitMove';
 import { Feedback } from './Feedback';
+import WelcomePage from './WelcomePage';
+import Image from 'next/image';
 
 // Add Phantom wallet type to window object
 declare global {
@@ -31,6 +33,7 @@ const GameArena: React.FC = () => {
     const { connection } = useConnection();
     const { connected, publicKey, disconnect, signTransaction } = useWallet();
     const [isDisconnecting, setIsDisconnecting] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     const [joinCode, setJoinCode] = useState('');
     const [betAmount] = useState('0.05');
@@ -52,6 +55,7 @@ const GameArena: React.FC = () => {
     const [roomReady, setRoomReady] = useState(false);
     console.debug('roomReady state:', roomReady); // eslint-disable-line
     const [missingGameSince, setMissingGameSince] = useState<number | null>(null);
+    const [hasSignedTx, setHasSignedTx] = useState(false);
 
     const { gameState, loading: gameLoading, commitMove, revealMove } = useOnChainGame(gameJoinCode);
     
@@ -165,6 +169,7 @@ const GameArena: React.FC = () => {
             
             const signedTx = await signTransaction(tx);
             const txId = await connection.sendRawTransaction(signedTx.serialize());
+            setHasSignedTx(true);
             
             // Confirm using polling instead of WebSocket
             let confirmation = null;
@@ -391,6 +396,7 @@ const GameArena: React.FC = () => {
             
             const signedTx = await signTransaction(tx);
             const txId = await connection.sendRawTransaction(signedTx.serialize());
+            setHasSignedTx(true);
             
             // Confirm using polling
             let confirmation = null;
@@ -816,6 +822,8 @@ const GameArena: React.FC = () => {
         try {
             setIsDisconnecting(true);
             await disconnect();
+            setHasSignedTx(false);
+            localStorage.removeItem('hasSignedTx');
         } catch (error) {
             console.error('Failed to disconnect:', error);
         } finally {
@@ -907,249 +915,307 @@ const GameArena: React.FC = () => {
         }
     }, [gameJoinCode, publicKey, connected, disconnect, connection, signTransaction, handleExitRoom, setFeedbackOnce]);
 
+    // Persist gameJoinCode in localStorage
+    useEffect(() => {
+        const stored = localStorage.getItem('gameJoinCode');
+        if (stored && !gameJoinCode) {
+            setGameJoinCode(stored);
+        }
+    }, []);
+    useEffect(() => {
+        if (gameJoinCode) {
+            localStorage.setItem('gameJoinCode', gameJoinCode);
+        } else {
+            localStorage.removeItem('gameJoinCode');
+        }
+    }, [gameJoinCode]);
+
+    // Restore hasSignedTx from localStorage on mount
+    useEffect(() => {
+        const stored = localStorage.getItem('hasSignedTx');
+        if (stored === 'true') {
+            setHasSignedTx(true);
+        }
+    }, []);
+
     // UI Rendering
     return (
         <div className="min-h-screen w-full flex flex-col items-center justify-start font-mono relative">
-            {/* Navbar */}
-            <div className="w-full bg-gray-800/90 backdrop-blur-sm shadow-lg fixed top-0 z-50">
-                <div className="max-w-6xl mx-auto px-4 py-3">
-                    <div className="flex justify-between items-center">
-                        <h1 className="text-2xl font-bold text-purple-400 truncate">Solana Stone Paper Scissors</h1>
-                        <div className="flex items-center gap-3 shrink-0">
-                            {!connected ? (
-                                <div className="shrink-0">
-                                    <WalletMultiButton className="!bg-purple-600 hover:!bg-purple-700 !transition-colors !rounded-lg !h-10 !px-4 !py-2" />
-                                </div>
-                            ) : (
-                                <button
-                                    className={`px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white text-sm font-bold rounded-lg border-2 border-purple-500 transition-all duration-200 shadow-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shrink-0`}
-                                    onClick={handleDisconnect}
-                                    disabled={isDisconnecting}
-                                >
-                                    {isDisconnecting ? (
-                                        <>
-                                            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                                                <circle 
-                                                    className="opacity-25" 
-                                                    cx="12" 
-                                                    cy="12" 
-                                                    r="10" 
-                                                    stroke="currentColor" 
-                                                    strokeWidth="4"
-                                                    fill="none"
-                                                />
-                                                <path 
-                                                    className="opacity-75" 
-                                                    fill="currentColor" 
-                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                                />
+            {!connected ? (
+                <WelcomePage />
+            ) : (
+                <>
+                    {/* Navbar */}
+                    <div className="w-full flex justify-center fixed top-0 z-50 pointer-events-none">
+                        <div className="max-w-4xl w-[96vw] mx-auto mt-4 px-4 py-3 bg-gray-800/70 backdrop-blur-xl shadow-2xl border border-purple-400/30 rounded-full flex items-center pointer-events-auto transition-all duration-300"
+                            style={{ boxShadow: '0 8px 32px 0 #0004, 0 1.5px 8px 0 #a855f733' }}>
+                            <div className="flex flex-col sm:flex-row flex-wrap justify-between items-center gap-2 gap-y-2 w-full">
+                                {/* Title and Burger menu in a row on mobile */}
+                                <div className="flex flex-row items-center w-full sm:w-auto justify-between">
+                                    <span className="text-base sm:text-lg font-bold truncate flex items-center gap-2" style={{fontFamily: 'var(--font-orbitron), \\"Courier New\\", monospace'}}>
+                                        <Image src="/icons/gor-icon.jpg" alt="Gorbagana Icon" width={32} height={32} className="rounded-full border-2 border-purple-400 bg-white" />
+                                        <span className="bg-gradient-to-r from-purple-400 via-fuchsia-500 to-green-400 bg-clip-text text-transparent">Gorbagana Games</span>
+                                    </span>
+                                    {/* Burger menu button for mobile, right-aligned */}
+                                    <button
+                                        className="sm:hidden ml-auto px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all duration-300"
+                                        onClick={() => setMobileMenuOpen((v) => !v)}
+                                        aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+                                        style={{ cursor: 'pointer' }}
+                                    >
+                                        {mobileMenuOpen ? (
+                                            <svg className="w-7 h-7 text-purple-300 transition-all duration-300" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                                <line x1="6" y1="6" x2="18" y2="18" strokeLinecap="round" />
+                                                <line x1="6" y1="18" x2="18" y2="6" strokeLinecap="round" />
                                             </svg>
-                                            Disconnecting...
-                                        </>
-                                    ) : (
-                                        'Disconnect'
-                                    )}
-                                </button>
-                             )}
+                                        ) : (
+                                            <svg className="w-7 h-7 text-purple-300 transition-all duration-300" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                                            </svg>
+                                        )}
+                                    </button>
+                                </div>
+                                {/* Right side: Disconnect + Public Rooms */}
+                                <div className="hidden sm:flex flex-row items-center gap-2 ml-auto">
+                                    <button
+                                        className={`px-3 py-1 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white text-xs font-bold rounded-full border-2 border-purple-500 transition-all duration-200 shadow flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
+                                        onClick={handleDisconnect}
+                                        disabled={isDisconnecting}
+                                    >
+                                        {isDisconnecting ? (
+                                            <>
+                                                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                                                    <circle 
+                                                        className="opacity-25" 
+                                                        cx="12" 
+                                                        cy="12" 
+                                                        r="10" 
+                                                        stroke="currentColor" 
+                                                        strokeWidth="4"
+                                                        fill="none"
+                                                    />
+                                                    <path 
+                                                        className="opacity-75" 
+                                                        fill="currentColor" 
+                                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                                    />
+                                                </svg>
+                                                Disconnecting...
+                                            </>
+                                        ) : (
+                                            'Disconnect'
+                                        )}
+                                    </button>
+                                    <button
+                                        className="px-3 py-1 text-xs rounded-full bg-gradient-to-r from-purple-700 to-purple-900 text-purple-100 border-2 border-purple-400/40 shadow-sm cursor-not-allowed opacity-80 font-semibold relative transition-all duration-200 hover:from-purple-800 hover:to-purple-700 group"
+                                        disabled
+                                        tabIndex={-1}
+                                    >
+                                        Public Rooms
+                                        <span className="absolute left-1/2 -translate-x-1/2 top-full mt-2 px-3 py-1 rounded-lg bg-gray-900 text-yellow-300 text-xs font-bold shadow-lg border border-yellow-400 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 z-50 whitespace-nowrap">
+                                            Coming Soon
+                                        </span>
+                                    </button>
+                                </div>
+                                {/* Mobile menu dropdown */}
+                                <div
+                                    className={`sm:hidden absolute right-2 top-full mt-2 z-50 flex flex-col items-center gap-2 bg-gray-900/95 border-t border-purple-700/40 shadow-xl py-4 max-w-xs w-11/12 rounded-2xl transition-all duration-300 ease-in-out ${mobileMenuOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-2 pointer-events-none'}`}
+                                    style={{ cursor: 'pointer' }}
+                                >
+                                    <button
+                                        className={`w-11/12 px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white text-xs font-bold rounded-lg border-2 border-purple-500 transition-all duration-200 shadow flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed justify-center`}
+                                        onClick={handleDisconnect}
+                                        disabled={isDisconnecting}
+                                    >
+                                        {isDisconnecting ? (
+                                            <>
+                                                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                                                    <circle 
+                                                        className="opacity-25" 
+                                                        cx="12" 
+                                                        cy="12" 
+                                                        r="10" 
+                                                        stroke="currentColor" 
+                                                        strokeWidth="4"
+                                                        fill="none"
+                                                    />
+                                                    <path 
+                                                        className="opacity-75" 
+                                                        fill="currentColor" 
+                                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                                    />
+                                                </svg>
+                                                Disconnecting...
+                                            </>
+                                        ) : (
+                                            'Disconnect'
+                                        )}
+                                    </button>
+                                    <button
+                                        className="w-11/12 px-3 py-1 text-xs rounded-full bg-gradient-to-r from-purple-700 to-purple-900 text-purple-100 border-2 border-purple-400/40 shadow-sm cursor-not-allowed opacity-80 font-semibold mb-1 relative transition-all duration-200 hover:from-purple-800 hover:to-purple-700 group"
+                                        disabled
+                                        tabIndex={-1}
+                                    >
+                                        Public Rooms
+                                        <span className="absolute left-1/2 -translate-x-1/2 top-full mt-2 px-3 py-1 rounded-lg bg-gray-900 text-yellow-300 text-xs font-bold shadow-lg border border-yellow-400 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 z-50 whitespace-nowrap">
+                                            Coming Soon
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            {/* Main Content - with top padding for navbar */}
-            <div className="w-full max-w-6xl flex flex-col gap-4 pt-20 px-4 pb-32 min-h-screen overflow-y-auto">
-                {!connected ? (
-                    <div className="flex flex-col gap-6 items-center justify-center mt-8">
-                        {/* Game Info Card */}
-                        <div className="w-full max-w-2xl bg-gray-800/90 backdrop-blur-sm rounded-lg p-6 border border-purple-500/20">
-                            <h2 className="text-2xl font-bold text-purple-400 mb-4">Welcome to Solana Stone Paper Scissors!</h2>
-                            <div className="space-y-4 text-gray-300">
-                                <p className="text-lg">🎮 Play the classic game with a blockchain twist:</p>
-                                <ul className="list-disc list-inside space-y-2 ml-4">
-                                    <li>Connect your Solana wallet to start</li>
-                                    <li>Create a game room with a custom bet amount</li>
-                                    <li>Share your room code with friends to play</li>
-                                    <li>Best of 3 rounds</li>
-                                    <li>Winner takes the entire pot!</li>
-                                </ul>
-                                <div className="mt-6 p-4 bg-purple-900/30 rounded-lg">
-                                    <h3 className="text-lg font-semibold text-purple-400 mb-2">How to Play:</h3>
-                                    <ol className="list-decimal list-inside space-y-2 ml-4">
-                                        <li>Connect your wallet</li>
-                                        <li>Create a game or join with a room code</li>
-                                        <li>Choose your move: Rock, Paper, or Scissors</li>
-                                        <li>Wait for your opponent</li>
-                                        <li>Win 2 rounds to claim the prize!</li>
-                                    </ol>
-                                </div>
-                                <div className="mt-6 text-sm text-purple-300/80">
-                                    <p>🔒 Secure & Fair Play:</p>
-                                    <ul className="list-disc list-inside space-y-1 ml-4">
-                                        <li>Moves are committed and revealed on-chain</li>
-                                        <li>Smart contract ensures fair gameplay</li>
-                                        <li>Automatic prize distribution</li>
-                                    </ul>
-                                </div>
-                                </div>
-                            </div>
-                        <div className="text-center text-gray-400">
-                            Connect your wallet to start playing!
-                        </div>
-                    </div>
-                ) : !gameJoinCode ? (
-                    // Create/Join Game Section
-                    <div className="max-w-md mx-auto bg-gray-800/90 backdrop-blur-sm rounded-lg p-6">
-                        <GameControlButtons
-                            gameJoinCode={gameJoinCode}
-                            gameState={gameState}
-                            publicKey={publicKey}
-                            isLoading={isLoading}
-                            isCreating={isCreating}
-                            isJoining={isJoining}
-                            handleInitializeGame={handleInitializeGame}
-                            handleJoinGame={handleJoinGame}
-                            handleCommitMove={handleCommitMove}
-                            handleClaimWinnings={handleClaimWinnings}
-                            handleExitRoom={handleExitRoom}
-                            handleCopyRoomId={handleCopyRoomId}
-                            joinCode={joinCode}
-                            setJoinCode={setJoinCode}
-                            copyStatus={copyStatus}
-                            walletReady={connected && !!publicKey}
-                        />
-                    </div>
-                ) : (
-                    // Game Room Layout
-                    <>
-                        {/* Main Game Info */}
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-                            {/* Left Column - Game Info */}
-                            <div className="space-y-4 flex flex-col justify-center">
-                                <div className="bg-gray-800/90 backdrop-blur-sm rounded-lg p-4">
-                                    <div className="flex justify-between items-center mb-4">
-                                        <h2 className="text-xl font-bold text-purple-400">Game Room</h2>
-                                        <button
-                                            onClick={handleExitRoom}
-                                            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
-                                        >
-                                            🚪 Leave
-                                        </button>
-                            </div>
-                                    <GameSummary 
-                                    completed={!!gameState?.status?.completed}
-                                    p1Wins={gameState?.rounds_won_p1 || 0}
-                                    p2Wins={gameState?.rounds_won_p2 || 0}
-                                        betAmount={gameState?.bet_amount ? (gameState.bet_amount.toNumber() / 1e9).toFixed(2) : '0.05'}
-                                        totalWinnings={gameState?.bet_amount ? ((gameState.bet_amount.toNumber() * 2) / 1e9).toFixed(2) : '0.10'}
-                                />
-                                    <PlayerInfo 
-                                        player1={gameState?.player1?.toString() || null} 
-                                        player2={gameState?.player2?.toString() || null} 
-                                    />
-                                    {/* Room ID and Copy Button */}
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <span className="text-sm text-gray-400">Room:</span>
-                                        <code className="text-sm bg-gray-700/50 px-2 py-1 rounded">{gameJoinCode}</code>
-                                        <button
-                                            onClick={handleCopyRoomId}
-                                            className="ml-auto px-3 py-1 text-xs rounded bg-purple-600 hover:bg-purple-700 transition-colors"
-                                        >
-                                            {copyStatus}
-                               </button>
-                            </div>
-                            </div>
-                        </div>
-
-                            {/* Center Column - Game Status & Turn Indicator */}
-                            <div className="flex flex-col justify-center items-center">
-                                <div className="bg-gray-800/90 backdrop-blur-sm rounded-lg p-4 w-full max-w-md mx-auto">
-                                    <GameStatus status={gameState?.status} />
-                                    <div className="mt-4">
-                             <TurnIndicator 
-                                hasCommitted={(() => {
-                                    const isPlayer1 = gameState?.player1?.toString() === publicKey?.toString();
-                                    const isPlayer2 = gameState?.player2?.toString() === publicKey?.toString();
-                                    return (isPlayer1 && !!gameState?.player1_commit) || 
-                                           (isPlayer2 && !!gameState?.player2_commit);
-                                })()}
-                                opponentCommitted={(() => {
-                                    const isPlayer1 = gameState?.player1?.toString() === publicKey?.toString();
-                                    const isPlayer2 = gameState?.player2?.toString() === publicKey?.toString();
-                                    return (isPlayer1 && !!gameState?.player2_commit) || 
-                                           (isPlayer2 && !!gameState?.player1_commit);
-                                })()}
-                                bothCommitted={!!gameState?.player1_commit && !!gameState?.player2_commit}
-                                movesRevealed={!!gameState?.player1_move && !!gameState?.player2_move}
-                                player1Commit={!!gameState?.player1_commit}
-                                player2Commit={!!gameState?.player2_commit}
-                                isYou1={gameState?.player1?.toString() === publicKey?.toString()}
-                                isYou2={gameState?.player2?.toString() === publicKey?.toString()}
-                            />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Right Column - Game Progress */}
-                            <div className="space-y-4 flex flex-col justify-center">
-                                <div className="bg-gray-800/90 backdrop-blur-sm rounded-lg p-4">
-                                    <RoundProgress 
-                                        round={gameState?.total_rounds || 0}
-                                        completed={!!gameState?.status?.completed}
-                                        winningsClaimed={!!gameState?.status?.winningsClaimed}
-                                        p1Wins={gameState?.rounds_won_p1 || 0}
-                                        p2Wins={gameState?.rounds_won_p2 || 0}
-                                        finalWinner={(() => {
-                                            if (!gameState?.status?.completed) return null;
-                                            const p1Wins = gameState.rounds_won_p1 || 0;
-                                            const p2Wins = gameState.rounds_won_p2 || 0;
-                                            if (p1Wins === p2Wins) return 'Tie';
-                                            return p1Wins > p2Wins ? 'Player 1' : 'Player 2';
-                                        })()}
-                                    />
-                                </div>
-                            {gameState?.player1_move && gameState?.player2_move && (
-                                    <div className="bg-gray-800/90 backdrop-blur-sm rounded-lg p-4">
-                                <GameCompletion
+                    {/* Main Content - with top padding for navbar */}
+                    <div className="w-full max-w-6xl flex flex-col gap-3 sm:gap-4 pt-28 sm:pt-20 px-2 sm:px-4 pb-24 min-h-screen overflow-y-auto">
+                        {!gameJoinCode ? (
+                            // Create/Join Game Section
+                            <div className="max-w-md mx-auto bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 sm:p-6 w-full mt-6">
+                                <GameControlButtons
                                     gameJoinCode={gameJoinCode}
                                     gameState={gameState}
-                                    betAmount={gameState.bet_amount ? gameState.bet_amount.toNumber() / 1e9 : 0.05}
                                     publicKey={publicKey}
+                                    isLoading={isLoading}
+                                    isCreating={isCreating}
+                                    isJoining={isJoining}
+                                    handleInitializeGame={handleInitializeGame}
+                                    handleJoinGame={handleJoinGame}
+                                    handleCommitMove={handleCommitMove}
                                     handleClaimWinnings={handleClaimWinnings}
-                                    winningsClaimed={gameState.status?.winningsClaimed}
+                                    handleExitRoom={handleExitRoom}
+                                    handleCopyRoomId={handleCopyRoomId}
+                                    joinCode={joinCode}
+                                    setJoinCode={setJoinCode}
+                                    copyStatus={copyStatus}
+                                    walletReady={connected && !!publicKey}
                                 />
                             </div>
-                        )}
-                            </div>
+                        ) : (
+                            // Game Room Layout
+                            <>
+                                {/* Main Game Info */}
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6 items-stretch">
+                                    {/* Left Column - Enhanced Game Room Card */}
+                                    <div className="flex flex-col justify-center">
+                                        <GameControlButtons
+                                            gameJoinCode={gameJoinCode}
+                                            gameState={gameState}
+                                            publicKey={publicKey}
+                                            isLoading={isLoading}
+                                            isCreating={isCreating}
+                                            isJoining={isJoining}
+                                            handleInitializeGame={handleInitializeGame}
+                                            handleJoinGame={handleJoinGame}
+                                            handleCommitMove={handleCommitMove}
+                                            handleClaimWinnings={handleClaimWinnings}
+                                            handleExitRoom={handleExitRoom}
+                                            handleCopyRoomId={handleCopyRoomId}
+                                            joinCode={joinCode}
+                                            setJoinCode={setJoinCode}
+                                            copyStatus={copyStatus}
+                                            walletReady={connected && !!publicKey}
+                                        />
                                     </div>
-                                    
-                        {/* Game Controls */}
-                        <div className="mt-6 mb-8">
-                            <div className="max-w-xs mx-auto">
-                                <div className="bg-gray-800/95 backdrop-blur-md rounded-lg p-4 shadow-lg border border-purple-500/20">
-                                    <CommitMove isLoading={isLoading} handleCommitMove={handleCommitMove} />
+
+                                    {/* Center Column - Game Status & Turn Indicator */}
+                                    <div className="flex flex-col justify-center items-center">
+                                        <div className="bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 sm:p-4 w-full max-w-md mx-auto">
+                                            <GameStatus status={gameState?.status} />
+                                            <div className="mt-2 sm:mt-4">
+                                                <TurnIndicator 
+                                                    hasCommitted={(() => {
+                                                        const isPlayer1 = gameState?.player1?.toString() === publicKey?.toString();
+                                                        const isPlayer2 = gameState?.player2?.toString() === publicKey?.toString();
+                                                        return (isPlayer1 && !!gameState?.player1_commit) || 
+                                                               (isPlayer2 && !!gameState?.player2_commit);
+                                                    })()}
+                                                    opponentCommitted={(() => {
+                                                        const isPlayer1 = gameState?.player1?.toString() === publicKey?.toString();
+                                                        const isPlayer2 = gameState?.player2?.toString() === publicKey?.toString();
+                                                        return (isPlayer1 && !!gameState?.player2_commit) || 
+                                                               (isPlayer2 && !!gameState?.player1_commit);
+                                                    })()}
+                                                    bothCommitted={!!gameState?.player1_commit && !!gameState?.player2_commit}
+                                                    movesRevealed={!!gameState?.player1_move && !!gameState?.player2_move}
+                                                    player1Commit={!!gameState?.player1_commit}
+                                                    player2Commit={!!gameState?.player2_commit}
+                                                    isYou1={gameState?.player1?.toString() === publicKey?.toString()}
+                                                    isYou2={gameState?.player2?.toString() === publicKey?.toString()}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Right Column - Game Progress or Result */}
+                                    <div className="space-y-2 sm:space-y-4 flex flex-col justify-center">
+                                        {/* Show GameCompletion if game is completed, otherwise show RoundProgress */}
+                                        {gameState?.status?.completed ? (
+                                            <div className="bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 sm:p-4">
+                                                <GameCompletion
+                                                    gameJoinCode={gameJoinCode}
+                                                    gameState={gameState}
+                                                    betAmount={gameState.bet_amount ? gameState.bet_amount.toNumber() / 1e9 : 0.05}
+                                                    publicKey={publicKey}
+                                                    handleClaimWinnings={handleClaimWinnings}
+                                                    winningsClaimed={gameState.status?.winningsClaimed}
+                                                    handleExitRoom={handleExitRoom}
+                                                />
+                                            </div>
+                                        ) : (
+                                            <div className="bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 sm:p-4">
+                                                <RoundProgress 
+                                                    round={gameState?.total_rounds || 0}
+                                                    completed={!!gameState?.status?.completed}
+                                                    winningsClaimed={!!gameState?.status?.winningsClaimed}
+                                                    p1Wins={gameState?.rounds_won_p1 || 0}
+                                                    p2Wins={gameState?.rounds_won_p2 || 0}
+                                                    finalWinner={(() => {
+                                                        if (!gameState?.status?.completed) return null;
+                                                        const p1Wins = gameState.rounds_won_p1 || 0;
+                                                        const p2Wins = gameState.rounds_won_p2 || 0;
+                                                        if (p1Wins === p2Wins) return 'Tie';
+                                                        return p1Wins > p2Wins ? 'Player 1' : 'Player 2';
+                                                    })()}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                
+                                {/* Move Controls - Centered below all cards */}
+                                <div className="mt-4 mb-8 sm:mt-6 sm:mb-8">
+                                    <div className="max-w-xs mx-auto">
+                                        {gameState && gameState.player1 && gameState.player2 && gameState.status?.inProgress ? (
+                                            <CommitMove isLoading={isLoading} handleCommitMove={handleCommitMove} />
+                                        ) : (
+                                            <CommitMove isLoading={false} handleCommitMove={handleCommitMove} disabled={true} waitingMessage={
+                                                !gameState?.player2 ? 'Waiting for Player 2 to join...' : 'Game not in progress.'
+                                            } />
+                                        )}
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
+
+                    {/* Bottom right notification and network status */}
+                    <div className="pointer-events-none fixed bottom-4 right-4 z-50 flex flex-col items-end gap-2">
+                        <div className="max-w-md w-full pointer-events-auto mb-2">
+                            <Feedback feedback={feedback} onClose={() => setFeedback(null)} />
+                        </div>
+                        {hasSignedTx && connection?.rpcEndpoint === 'https://rpc.gorbagana.wtf' && (
+                            <div className="pointer-events-auto">
+                                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-900 border border-green-400">
+                                    <span className="w-2 h-2 rounded-full bg-green-400"></span>
+                                    <span className="text-xs font-bold text-white tracking-wide">
+                                        Connected to <span className="text-green-200">Gorbagana</span> testnet
+                                    </span>
                                 </div>
                             </div>
-                        </div>
-                    </>
-                )}
-            </div>
-
-            {/* Bottom right notification and network status */}
-            <div className="pointer-events-none fixed bottom-4 right-4 z-50 flex flex-col items-end gap-2">
-                <div className="max-w-md w-full pointer-events-auto mb-2">
-                    <Feedback feedback={feedback} onClose={() => setFeedback(null)} />
-                </div>
-                {connected && connection?.rpcEndpoint === 'https://rpc.gorbagana.wtf' && (
-                    <div className="pointer-events-auto">
-                        <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-900 border border-green-400">
-                            <span className="w-2 h-2 rounded-full bg-green-400"></span>
-                            <span className="text-xs font-bold text-white tracking-wide">
-                                Connected to <span className="text-green-200">Gorbagana</span> testnet
-                            </span>
-                        </div>
+                        )}
                     </div>
-                )}
-            </div>
+                </>
+            )}
         </div>
     );
 };
