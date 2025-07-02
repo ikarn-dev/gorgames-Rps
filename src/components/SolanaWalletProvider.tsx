@@ -23,6 +23,7 @@ function useWalletSigner(setFeedback: (f: any) => void) {
           // Store authentication state
           localStorage.setItem('walletAuthenticated', 'true');
           localStorage.setItem('walletPublicKey', publicKey.toBase58());
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
           if (err && (err.code === 4001 || err.message?.toLowerCase().includes('user rejected'))) {
             setFeedback({ type: 'warning', message: 'Wallet connection request was rejected.' });
