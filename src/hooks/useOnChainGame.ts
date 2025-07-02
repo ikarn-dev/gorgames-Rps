@@ -49,19 +49,6 @@ function useOnChainGame(joinCode: string): UseOnChainGameReturn {
   const [lastFetchTime, setLastFetchTime] = useState(0);
   const [isRevealing, setIsRevealing] = useState(false);
 
-  // Debug logging
-  console.log("useOnChainGame hook state:", {
-    joinCode,
-    publicKey: publicKey?.toBase58(),
-    wallet: wallet ? "exists" : "null",
-    walletAdapter: wallet?.adapter ? "exists" : "null",
-    walletPublicKey: wallet?.adapter?.publicKey?.toBase58(),
-    gamePda: gamePda?.toBase58(),
-    gameState: gameState ? "exists" : "null",
-    loading,
-    error
-  });
-
   // Derive game PDA using joinCode
   useEffect(() => {
     if (!joinCode || !wallet || !publicKey) return;
@@ -83,40 +70,24 @@ function useOnChainGame(joinCode: string): UseOnChainGameReturn {
   }, [joinCode, wallet, publicKey]);
 
   const fetchGame = useCallback(async () => {
-    console.log("fetchGame called:", {
-      gamePda: gamePda?.toBase58(),
-      wallet: wallet ? "exists" : "null",
-      publicKey: publicKey?.toBase58()
-    });
-    
     if (!gamePda || !wallet || !publicKey) {
-      console.log("fetchGame early return:", {
-        noGamePda: !gamePda,
-        noWallet: !wallet,
-        noPublicKey: !publicKey
-      });
       return;
     }
     
     // Debounce: prevent fetching more than once every 2 seconds
     const now = Date.now();
     if (now - lastFetchTime < 2000) {
-      console.log("fetchGame debounced - too soon since last fetch");
       return;
     }
     setLastFetchTime(now);
     
     setLoading(true);
     setError(null);
-    console.log('Loading game state...'); // Background logging instead of UI
     
     try {
       const program = await getProgramFromWallet(wallet);
-      console.log("Attempting to fetch game account:", gamePda.toBase58());
       
       const account = await program.account.game.fetch(gamePda);
-      console.log("Game account fetched successfully:", account);
-      console.log("Raw account data:", JSON.stringify(account, null, 2));
       
       // Check for undefined values and provide fallbacks
       const processedAccount = {
@@ -133,9 +104,6 @@ function useOnChainGame(joinCode: string): UseOnChainGameReturn {
       // Process the status properly
       let processedStatus = {};
       if (account.status) {
-        console.log("Raw status from program:", account.status);
-        
-        // Convert Solana program status to frontend format
         if (account.status.waiting !== undefined) {
           processedStatus = { waiting: true };
         } else if (account.status.inProgress !== undefined) {
@@ -152,8 +120,6 @@ function useOnChainGame(joinCode: string): UseOnChainGameReturn {
         status: processedStatus
       };
       
-      console.log("Processed account data:", JSON.stringify(finalProcessedAccount, null, 2));
-      
       // Wallet pubkey verification
       if (
         publicKey &&
@@ -168,11 +134,7 @@ function useOnChainGame(joinCode: string): UseOnChainGameReturn {
       }
       
       setGameState(finalProcessedAccount as unknown as GameState);
-      console.log("Game state set successfully");
-      console.log('Game state loaded successfully'); // Background logging
     } catch (e: unknown) {
-      console.error("Error fetching game state:", e);
-      
       // Handle missing accounts gracefully - this happens when games are completed and closed
       const errorMessage = e instanceof Error ? e.message : String(e);
       if (errorMessage.includes('Account does not exist') || 
@@ -181,7 +143,6 @@ function useOnChainGame(joinCode: string): UseOnChainGameReturn {
           errorMessage.includes('0xbc4') ||
           errorMessage.includes('3012') ||
           errorMessage.includes('5AUYsm51SNxEp7b2c9ey5L1xRTgatmGc1GoY2pLDEGst')) {
-        console.log("Game account does not exist - game completed and closed, stopping polling");
         // Clear game state since account is closed
         setGameState(null);
         setError(null);
@@ -199,7 +160,6 @@ function useOnChainGame(joinCode: string): UseOnChainGameReturn {
   // Exponential backoff polling
   useEffect(() => {
     if (!gamePda) {
-      console.log("No gamePda, stopping polling");
       return;
     }
     let intervalMs = 2000;
@@ -272,13 +232,7 @@ function useOnChainGame(joinCode: string): UseOnChainGameReturn {
       
       await fetchGame();
       
-      // Log successful commit
-      console.log("Move committed successfully to blockchain");
-      console.log("Transaction ID:", txId);
-      
     } catch (e: unknown) {
-      console.error("Failed to commit move:", e);
-      
       // Handle specific game errors with user-friendly messages
       let errorMessage = "Failed to commit move. ";
       
@@ -314,7 +268,6 @@ function useOnChainGame(joinCode: string): UseOnChainGameReturn {
     
     // Prevent multiple simultaneous reveal attempts
     if (isRevealing) {
-      console.log("Reveal already in progress, skipping...");
       return;
     }
     
@@ -374,8 +327,6 @@ function useOnChainGame(joinCode: string): UseOnChainGameReturn {
       
       await fetchGame();
     } catch (e: unknown) {
-      console.error("Failed to reveal move:", e);
-      
       let errorMessage = "Failed to reveal move. ";
       
       if (e instanceof Error && e.message?.includes('Invalid move')) {
@@ -398,7 +349,6 @@ function useOnChainGame(joinCode: string): UseOnChainGameReturn {
   };
 
   const stopPolling = () => {
-    console.log("Stopping polling");
     setGamePda(null);
   };
 

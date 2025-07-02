@@ -10,8 +10,6 @@ const SOLANA_CLUSTER = process.env.NEXT_PUBLIC_SOLANA_RPC || "https://rpc.gorbag
 
 // NOTE: This is a Solana fork using GOR as fee token instead of SOL
 // The program may need to be redeployed on this fork for compatibility
-console.log("SOLANA_CLUSTER:", SOLANA_CLUSTER);
-console.log("SPS_PROGRAM_ID:", SPS_PROGRAM_ID);
 
 const CONNECTION_CONFIG = {
   commitment: 'confirmed' as const,
@@ -115,46 +113,31 @@ export function getProvider(wallet: any): AnchorProvider {
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function getProgramFromWallet(wallet: any): Promise<SpsProgram> {
-  console.log("Initializing program with wallet:", {
-    hasWallet: !!wallet,
-    hasPublicKey: !!(wallet?.publicKey || wallet?.adapter?.publicKey),
-    publicKey: (wallet?.publicKey || wallet?.adapter?.publicKey)?.toBase58(),
-  });
-  
   validateWallet(wallet);
   
   const provider = getProvider(wallet);
   const programId = new PublicKey(SPS_PROGRAM_ID);
   
-  console.log("Program ID:", programId.toBase58());
-  
   try {
     // Try to use deployed IDL first, fall back to local
     const idlToUse = await getIdl(programId, provider);
     
-    console.log("IDL to use:", idlToUse);
-    
     return await Program.at(programId, provider) as SpsProgram;
   } catch (error) {
-    console.error("Error creating Program:", error);
     throw new Error(`Failed to initialize program: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
 async function getIdl(programId: PublicKey, provider: AnchorProvider): Promise<Idl> {
   try {
-    console.log("Attempting to fetch deployed IDL...");
     const deployedIdl = await Program.fetchIdl(programId, provider);
     
     if (deployedIdl) {
-      console.log("Successfully fetched deployed IDL");
       return ensureGameAccountType(deployedIdl);
     }
   } catch (error) {
-    console.log("Failed to fetch deployed IDL:", error);
   }
   
-  console.log("Using local IDL as fallback");
   return spsIdl as Idl;
 }
 
@@ -171,7 +154,6 @@ function ensureGameAccountType(idl: Idl): Idl {
   const gameAccount = idl.accounts.find((acc: any) => acc.name === 'Game') as any;
   
   if (gameAccount && !gameAccount.type) {
-    console.log("Adding missing type definition to Game account");
     gameAccount.type = {
       kind: "struct",
       fields: [

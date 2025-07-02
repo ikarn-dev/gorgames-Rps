@@ -138,14 +138,6 @@ const GameArena: React.FC = () => {
                 program.programId
             );
 
-            console.log("Creating transaction with:", {
-                joinCodeBytes,
-                betAmountLamports,
-                gamePda: gamePda.toBase58(),
-                player1: publicKey.toBase58(),
-                programId: program.programId.toBase58()
-            });
-
             const tx = await program.methods
                 .initializeGame(joinCodeBytes, new BN(betAmountLamports))
                 .accounts({
@@ -196,13 +188,6 @@ const GameArena: React.FC = () => {
                 throw new Error('Transaction confirmation timeout');
             }
 
-            console.log("Transaction successful:", txId);
-
-            setFeedbackOnce({ 
-                type: 'success', 
-                message: `Game "${code}" initialized successfully! Transaction: ${txId.slice(0, 8)}...` 
-            });
-
             // --- POLL FOR ROOM READINESS ---
             setRoomReady(false);
             const confirmationTime = Date.now();
@@ -225,7 +210,6 @@ const GameArena: React.FC = () => {
                     }
                 } catch (_e) {
                     // Ignore fetch errors, just keep polling
-                    console.debug(_e); // eslint-disable-line
                 }
                 await new Promise(res => setTimeout(res, 1000));
                 pollTries++;
@@ -537,46 +521,21 @@ const GameArena: React.FC = () => {
     // Auto-reveal when both players have committed
     useEffect(() => {
         const autoReveal = async () => {
-            console.log("Auto-reveal check:", {
-                gameState: !!gameState,
-                committedSalt: !!committedSalt,
-                committedMove: committedMove,
-                publicKey: !!publicKey,
-                player1Commit: !!gameState?.player1_commit,
-                player2Commit: !!gameState?.player2_commit,
-                player1Move: !!gameState?.player1_move,
-                player2Move: !!gameState?.player2_move,
-                isAutoRevealing,
-                hasRevealed
-            });
-            
             if (!gameState || !committedSalt || committedMove === null || !publicKey || !gameJoinCode) return;
             
             const bothCommitted = gameState.player1_commit && gameState.player2_commit;
             const movesRevealed = gameState.player1_move && gameState.player2_move;
             const isCurrentPlayer = bothCommitted;
             
-            console.log("Auto-reveal conditions:", {
-                bothCommitted,
-                movesRevealed,
-                isCurrentPlayer,
-                isAutoRevealing,
-                hasRevealed
-            });
-            
-            // Prevent duplicate reveals and race conditions
             if (bothCommitted && !movesRevealed && isCurrentPlayer && !isAutoRevealing && hasRevealed !== publicKey.toBase58()) {
                 // Allow both players to reveal their moves
-                console.log("Starting auto-reveal...");
                 try {
                     setIsAutoRevealing(true);
                     setFeedbackOnce({ type: 'info', message: 'Both players committed! Auto-revealing moves...' });
                     await revealMove(committedMove, committedSalt);
-                    console.log("Auto-reveal successful");
                     setHasRevealed(publicKey.toBase58()); // Only set after successful reveal
                     setFeedbackOnce({ type: 'success', message: 'Moves revealed! Round result will be shown shortly.' });
                 } catch (error: unknown) {
-                    console.error("Auto-reveal failed:", error);
                     setHasRevealed(null); // Reset on error to allow retry
                     setFeedbackOnce({ type: 'error', message: `Failed to auto-reveal: ${error instanceof Error ? error.message : 'Unknown error'}` });
                 } finally {
@@ -795,23 +754,6 @@ const GameArena: React.FC = () => {
         }
     }, [gameState, gameJoinCode, gameLoading, handleExitRoom, missingGameSince, setFeedbackOnce]);
 
-    // Debug logging for game state changes
-    useEffect(() => {
-        if (gameState) {
-            console.log("Game state changed:", {
-                joinCode: gameJoinCode,
-                status: gameState.status,
-                player1_move: gameState.player1_move,
-                player2_move: gameState.player2_move,
-                total_rounds: gameState.total_rounds,
-                rounds_won_p1: gameState.rounds_won_p1,
-                rounds_won_p2: gameState.rounds_won_p2,
-                player1_commit: gameState.player1_commit,
-                player2_commit: gameState.player2_commit
-            });
-        }
-    }, [gameState, gameJoinCode]);
-
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const showTimerWarning = !!(gameState && gameState.player1 && gameState.player2 && gameState.status?.inProgress);
 
@@ -938,6 +880,13 @@ const GameArena: React.FC = () => {
     // UI Rendering
     return (
         <div className="min-h-screen w-full flex flex-col items-center justify-start font-mono relative">
+            {/* Lobby/Game background image */}
+            <div className="fixed inset-0 w-full h-full z-0" style={{
+                backgroundImage: 'url(/assets/game-bg.png)',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+            }} />
             {!connected ? (
                 <WelcomePage />
             ) : (
@@ -1054,7 +1003,7 @@ const GameArena: React.FC = () => {
                                         tabIndex={-1}
                                     >
                                         Public Rooms
-                                        <span className="absolute left-1/2 -translate-x-1/2 top-full mt-2 px-3 py-1 rounded-lg bg-gray-900 text-yellow-300 text-xs font-bold shadow-lg border border-yellow-400 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 z-50 whitespace-nowrap">
+                                        <span className="block mt-2 px-3 py-1 rounded-lg bg-gray-900 text-yellow-300 text-xs font-bold shadow-lg border border-yellow-400 z-50 whitespace-nowrap">
                                             Coming Soon
                                         </span>
                                     </button>
@@ -1068,32 +1017,15 @@ const GameArena: React.FC = () => {
                         {!gameJoinCode ? (
                             // Create/Join Game Section
                             <div className="max-w-md mx-auto bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 sm:p-6 w-full mt-6">
-                                <GameControlButtons
-                                    gameJoinCode={gameJoinCode}
-                                    gameState={gameState}
-                                    publicKey={publicKey}
-                                    isLoading={isLoading}
-                                    isCreating={isCreating}
-                                    isJoining={isJoining}
-                                    handleInitializeGame={handleInitializeGame}
-                                    handleJoinGame={handleJoinGame}
-                                    handleCommitMove={handleCommitMove}
-                                    handleClaimWinnings={handleClaimWinnings}
-                                    handleExitRoom={handleExitRoom}
-                                    handleCopyRoomId={handleCopyRoomId}
-                                    joinCode={joinCode}
-                                    setJoinCode={setJoinCode}
-                                    copyStatus={copyStatus}
-                                    walletReady={connected && !!publicKey}
-                                />
-                            </div>
-                        ) : (
-                            // Game Room Layout
-                            <>
-                                {/* Main Game Info */}
-                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6 items-stretch">
-                                    {/* Left Column - Enhanced Game Room Card */}
-                                    <div className="flex flex-col justify-center">
+                                <div className="flex flex-col justify-center">
+                                    {gameLoading && !gameState ? (
+                                        <div className="flex items-center justify-center h-40">
+                                            <svg className="animate-spin h-8 w-8 text-purple-400" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                            </svg>
+                                        </div>
+                                    ) : (
                                         <GameControlButtons
                                             gameJoinCode={gameJoinCode}
                                             gameState={gameState}
@@ -1112,6 +1044,43 @@ const GameArena: React.FC = () => {
                                             copyStatus={copyStatus}
                                             walletReady={connected && !!publicKey}
                                         />
+                                    )}
+                                </div>
+                            </div>
+                        ) : (
+                            // Game Room Layout
+                            <>
+                                {/* Main Game Info */}
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6 items-stretch">
+                                    {/* Left Column - Enhanced Game Room Card */}
+                                    <div className="flex flex-col justify-center">
+                                        {gameLoading && !gameState ? (
+                                            <div className="flex items-center justify-center h-40">
+                                                <svg className="animate-spin h-8 w-8 text-purple-400" viewBox="0 0 24 24">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                                </svg>
+                                            </div>
+                                        ) : (
+                                            <GameControlButtons
+                                                gameJoinCode={gameJoinCode}
+                                                gameState={gameState}
+                                                publicKey={publicKey}
+                                                isLoading={isLoading}
+                                                isCreating={isCreating}
+                                                isJoining={isJoining}
+                                                handleInitializeGame={handleInitializeGame}
+                                                handleJoinGame={handleJoinGame}
+                                                handleCommitMove={handleCommitMove}
+                                                handleClaimWinnings={handleClaimWinnings}
+                                                handleExitRoom={handleExitRoom}
+                                                handleCopyRoomId={handleCopyRoomId}
+                                                joinCode={joinCode}
+                                                setJoinCode={setJoinCode}
+                                                copyStatus={copyStatus}
+                                                walletReady={connected && !!publicKey}
+                                            />
+                                        )}
                                     </div>
 
                                     {/* Center Column - Game Status & Turn Indicator */}
@@ -1202,9 +1171,9 @@ const GameArena: React.FC = () => {
                         </div>
                         {hasSignedTx && connection?.rpcEndpoint === 'https://rpc.gorbagana.wtf' && (
                             <div className="pointer-events-auto">
-                                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-900 border border-green-400">
+                                <div className="flex items-center gap-1 px-1 py-0.5 md:px-4 md:py-2 rounded-full bg-gray-900 border border-green-400 shadow text-[10px] md:text-sm max-w-[240px] md:max-w-none whitespace-nowrap overflow-hidden">
                                     <span className="w-2 h-2 rounded-full bg-green-400"></span>
-                                    <span className="text-xs font-bold text-white tracking-wide">
+                                    <span className="font-bold text-white tracking-wide">
                                         Connected to <span className="text-green-200">Gorbagana</span> testnet
                                     </span>
                                 </div>

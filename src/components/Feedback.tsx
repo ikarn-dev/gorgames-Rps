@@ -24,7 +24,7 @@ export const Feedback: React.FC<FeedbackProps> = ({ feedback, onClose }) => {
     };
 
     return (
-        <div className={`p-3 rounded-md text-sm border ${getFeedbackStyles(feedback.type)}`}>
+        <div className={`p-2 md:p-3 rounded-md text-xs md:text-sm border ${getFeedbackStyles(feedback.type)}`}>
             <div className="flex items-center justify-between">
                 <span>{feedback.message}</span>
                 {onClose && (

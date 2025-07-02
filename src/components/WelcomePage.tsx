@@ -3,7 +3,7 @@ import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 
 const WelcomePage: React.FC = () => {
   return (
-    <div className="min-h-screen w-full bg-black relative overflow-hidden">
+    <div className="min-h-screen w-full bg-black relative overflow-x-hidden overflow-y-auto">
       {/* Gradient Overlay for Enhanced Theme */}
       <div className="absolute inset-0 z-0 pointer-events-none" style={{background: 'linear-gradient(120deg, #6d28d9 0%, #a21caf 40%, #22d3ee 100%)', opacity: 0.18}} />
 
@@ -121,17 +121,17 @@ const WelcomePage: React.FC = () => {
         <div className="bg-neutral-900/80 backdrop-blur-md rounded-lg p-3 lg:p-3 border-2 border-yellow-400 shadow-lg shadow-yellow-400/30 hover:shadow-yellow-400/50 transition-all duration-300 max-w-3xl lg:max-w-3xl xl:max-w-4xl w-full mb-3 lg:mb-4 hover:cursor-pointer">
           <h3 className="text-lg lg:text-lg font-bold text-yellow-400 mb-2 lg:mb-2 text-center">🔒 SECURE & FAIR PLAY</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2 lg:gap-2 text-center text-white/90">
-            <div className="space-y-1 hover:scale-105 transition-transform duration-200">
+            <div className="flex flex-row md:flex-col items-center justify-center gap-2 md:gap-1 hover:scale-105 transition-transform duration-200">
               <div className="text-xl lg:text-xl">🔐</div>
-              <div className="text-xs">Moves are committed and revealed on-chain</div>
+              <div className="text-xs text-left md:text-center">Moves are committed and revealed on-chain</div>
             </div>
-            <div className="space-y-1 hover:scale-105 transition-transform duration-200">
+            <div className="flex flex-row md:flex-col items-center justify-center gap-2 md:gap-1 hover:scale-105 transition-transform duration-200">
               <div className="text-xl lg:text-xl">⚖️</div>
-              <div className="text-xs">Smart contract ensures fair gameplay</div>
+              <div className="text-xs text-left md:text-center">Smart contract ensures fair gameplay</div>
             </div>
-            <div className="space-y-1 hover:scale-105 transition-transform duration-200">
+            <div className="flex flex-row md:flex-col items-center justify-center gap-2 md:gap-1 hover:scale-105 transition-transform duration-200">
               <div className="text-xl lg:text-xl">💰</div>
-              <div className="text-xs">Automatic prize distribution</div>
+              <div className="text-xs text-left md:text-center">Automatic prize distribution</div>
             </div>
           </div>
         </div>

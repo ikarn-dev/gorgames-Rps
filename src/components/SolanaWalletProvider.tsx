@@ -18,17 +18,12 @@ function useWalletSigner() {
           const encodedMessage = new TextEncoder().encode(message);
           
           const signature = await signMessage(encodedMessage);
-          console.log("Wallet authenticated successfully:", {
-            publicKey: publicKey.toBase58(),
-            signature: Buffer.from(signature).toString('base64')
-          });
           
           // Store authentication state
           localStorage.setItem('walletAuthenticated', 'true');
           localStorage.setItem('walletPublicKey', publicKey.toBase58());
           
         } catch (error) {
-          console.error("Failed to sign authentication message:", error);
           localStorage.removeItem('walletAuthenticated');
         }
       }

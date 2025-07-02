@@ -52,7 +52,7 @@ const CommitMove: React.FC<CommitMoveProps> = ({ isLoading, handleCommitMove, di
         <div className="relative w-full h-full flex flex-col items-center justify-center p-2 bg-transparent">
             {/* Header */}
             <div className="relative z-10 text-center mb-2">
-                <h3 className="text-base font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent mb-1">
+                <h3 className="text-base font-bold mb-1 text-cyan-400" style={{ fontFamily: 'var(--font-orbitron), \"Courier New\", monospace' }}>
                     Choose Your Weapon
                 </h3>
                 <p className="text-gray-400 text-xs">Select your move to battle!</p>
@@ -62,7 +62,7 @@ const CommitMove: React.FC<CommitMoveProps> = ({ isLoading, handleCommitMove, di
             </div>
 
             {/* Buttons container */}
-            <div className="flex gap-3 justify-center items-center px-2 py-2">
+            <div className="flex flex-row justify-center items-center gap-x-4 md:gap-x-8 px-2 py-2 w-full">
                 {moveImages.map((move, index) => (
                     <button
                         key={move.name}
@@ -71,7 +71,7 @@ const CommitMove: React.FC<CommitMoveProps> = ({ isLoading, handleCommitMove, di
                         onMouseLeave={() => setHoveredIndex(null)}
                         disabled={isLoading || disabled}
                         className={`
-                            group relative flex flex-col items-center justify-center min-w-[56px] md:min-w-[70px]
+                            group relative flex flex-col items-center justify-center w-20 md:w-24
                             focus:outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed
                             transition-all duration-300 ease-out transform
                             ${hoveredIndex === index ? 'scale-110 -translate-y-1' : 'scale-100'}
@@ -112,14 +112,14 @@ const CommitMove: React.FC<CommitMoveProps> = ({ isLoading, handleCommitMove, di
                         </div>
                         {/* Enhanced name label */}
                         <div className={`
-                            mt-1 px-2 py-0.5 bg-gray-700 rounded-md shadow-md transition-all duration-150 group-hover:bg-purple-600 inline-flex
+                            mt-1 px-2 py-0.5 bg-gray-700 rounded-md shadow-md transition-all duration-150 group-hover:bg-purple-600 w-full text-center
                             ${hoveredIndex === index 
                                 ? `bg-gradient-to-r ${move.color} text-white shadow-xl` 
                                 : 'bg-gray-800/80 text-gray-300 border border-gray-600/50'
                             }
                             backdrop-blur-sm
                         `}>
-                            <span className="font-bold text-xs select-none pointer-events-none tracking-wide">
+                            <span className="font-bold text-xs select-none pointer-events-none tracking-wide w-full block">
                                 {move.name}
                             </span>
                         </div>
