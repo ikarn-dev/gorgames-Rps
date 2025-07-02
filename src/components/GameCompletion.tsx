@@ -42,7 +42,7 @@ export const GameCompletion: React.FC<GameCompletionProps> = ({
                 {isTie ? (
                     <div className="text-yellow-300 font-semibold text-base sm:text-lg flex flex-col items-center">
                         <span className="text-2xl sm:text-3xl mb-1">🤝</span>
-                        It's a <span className="underline">tie</span>!<br />
+                        It&apos;s a <span className="underline">tie</span>!<br />
                         <span className="text-xs sm:text-sm mt-1">Refund: <span className="font-mono">{betAmount} GOR</span></span>
                     </div>
                 ) : isWinner && !winningsClaimed ? (

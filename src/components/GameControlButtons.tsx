@@ -1,8 +1,6 @@
 import React from 'react';
 import { PublicKey } from '@solana/web3.js';
 import CreateGame from './CreateGame';
-import CommitMove from './CommitMove';
-import ClaimWinnings from './ClaimWinnings';
 import PlayerInfo from './PlayerInfo';
 
 interface GameControlButtonsProps {
@@ -33,15 +31,12 @@ interface GameControlButtonsProps {
 export const GameControlButtons: React.FC<GameControlButtonsProps> = ({
     gameJoinCode,
     gameState,
-    publicKey,
     isLoading,
     isCreating,
     isJoining,
     walletReady,
     handleInitializeGame,
     handleJoinGame,
-    handleCommitMove,
-    handleClaimWinnings,
     handleExitRoom,
     handleCopyRoomId,
     joinCode,

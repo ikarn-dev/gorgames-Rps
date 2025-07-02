@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useCallback, useEffect } from 'react';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { PublicKey, SystemProgram } from '@solana/web3.js';
 import BN from 'bn.js';
 import CryptoJS from 'crypto-js';
@@ -9,8 +8,6 @@ import { getProgramFromWallet } from '../lib/anchorConnection';
 import { useOnChainGame } from '../hooks/useOnChainGame';
 import { GameControlButtons } from './GameControlButtons';
 import { GameCompletion } from './GameCompletion';
-import GameSummary from './GameSummary';
-import PlayerInfo from './PlayerInfo';
 import GameStatus from './GameStatus';
 import TurnIndicator from './TurnIndicator';
 import RoundProgress from './RoundProgress';
