@@ -7,6 +7,7 @@ A fully on-chain, fair, and interactive Rock-Paper-Scissors game built on Solana
 ## Table of Contents
 
 - [Features](#features)
+- [Gorbagana Chain Integration](#gorbagana-chain-integration)
 - [How It Works](#how-it-works)
 - [Smart Contract (Anchor)](#smart-contract-anchor)
 - [Frontend (Next.js)](#frontend-nextjs)
@@ -46,6 +47,62 @@ A fully on-chain, fair, and interactive Rock-Paper-Scissors game built on Solana
 - **Handles all game state, SOL transfers, and fairness logic.**
 - **Events for game creation, joining, round completion, and payouts.**
 - **Strict error handling and validation for all actions.**
+
+---
+
+## Gorbagana Chain Integration
+
+### What is Gorbagana?
+
+Gorbagana is a custom Solana fork (testnet) that uses $GOR as its native fee token instead of $SOL. This project is fully deployed and operates on the Gorbagana chain, leveraging its unique RPC endpoint and token economics.
+
+### How Integration Works
+
+#### Backend (Anchor Smart Contract)
+
+- **Cluster Configuration:**  
+  The Anchor configuration files (`Anchor.toml` and `Anchor.tomlm`) set the provider cluster to `https://rpc.gorbagana.wtf`, ensuring all contract deployments and interactions occur on the Gorbagana chain.
+  ```toml
+  [provider]
+  cluster = "https://rpc.gorbagana.wtf"
+  wallet = "~/.config/solana/id.json"
+  ```
+- **Program Deployment:**  
+  The smart contract (Anchor program) is deployed to Gorbagana, with the program IDs referenced in the config files. All instructions, SOL (GOR) transfers, and state changes are executed on this chain.
+
+#### Frontend (Next.js/React)
+
+- **RPC Endpoint:**  
+  The frontend connects to Gorbagana via the same endpoint, either from environment variables or defaulting to `https://rpc.gorbagana.wtf`:
+  ```js
+  const SOLANA_CLUSTER = process.env.NEXT_PUBLIC_SOLANA_RPC || "https://rpc.gorbagana.wtf";
+  ```
+- **Wallet Support:**  
+  The app supports Backpack and Solflare wallets, allowing users to connect and sign transactions on Gorbagana.
+- **Network Awareness:**  
+  The UI displays a connection status indicating when the user is connected to the Gorbagana testnet.
+- **GOR as Native Token:**  
+  All bets, rewards, and fees are denominated in $GOR, and the UI consistently reflects this (e.g., "0.05 GOR" bet amounts, winnings, and refunds).
+
+#### Shared Integration Details
+
+- **IDL and Program ID:**  
+  Both backend and frontend use the same program ID and IDL, ensuring contract calls are consistent and type-safe.
+- **No Mainnet/SOL Risk:**  
+  All funds and actions are isolated to the Gorbagana testnet, making it safe for experimentation and development.
+
+---
+
+## How the Contract Works on Gorbagana
+
+- **Game Lifecycle:**  
+  The contract manages the full lifecycle of a Rock-Paper-Scissors game, including creation, joining, move commitment, reveal, round resolution, payouts, and refunds.
+- **Commit-Reveal Fairness:**  
+  Players commit a hash of their move and a random salt, then reveal both. The contract verifies the hash to prevent cheating.
+- **GOR Transfers:**  
+  All bets are locked in the contract account on Gorbagana. The winner (or both, in case of a tie) can claim their GOR directly from the contract.
+- **Cleanup:**  
+  Expired or abandoned games can be cleaned up, returning rent to the payer and keeping the chain tidy.
 
 ---
 
